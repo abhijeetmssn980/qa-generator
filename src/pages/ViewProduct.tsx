@@ -245,7 +245,7 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack }) => {
       </div>
 
       <div className="view-footer">
-        <p>Developed by <strong>Webbird Solutions</strong></p>
+        <p>Developed by <strong>AP Solutions</strong></p>
       </div>
     </div>
   );
