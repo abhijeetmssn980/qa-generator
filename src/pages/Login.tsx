@@ -35,20 +35,6 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     setLoading(false);
   };
 
-  const handleDemoLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const data = await apiLogin('demo@example.com', 'demo123456');
-      onLoginSuccess(data.user);
-    } catch (err: any) {
-      setError(err.message || 'Demo login failed. Please try again.');
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="login-container">
       <div className="login-wrapper">
@@ -130,16 +116,6 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 disabled={loading}
               >
                 {loading ? 'Signing In...' : 'Sign In'}
-              </button>
-
-              {/* Demo Login */}
-              <button
-                type="button"
-                className="btn-demo"
-                onClick={handleDemoLogin}
-                disabled={loading}
-              >
-                Try Demo
               </button>
             </form>
 
