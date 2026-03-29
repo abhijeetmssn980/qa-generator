@@ -138,6 +138,8 @@ export async function updateProduct(uniqueId: string, updates: Partial<Product>)
     registrationNumber: 'registration_number',
     packingSize: 'packing_size',
     manufacturerLicence: 'manufacturer_licence',
+    imageUrl: 'image_url',
+    hazardSymbol: 'hazard_symbol',
   };
 
   for (const [key, col] of Object.entries(columnMap)) {

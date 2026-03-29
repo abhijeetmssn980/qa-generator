@@ -123,6 +123,8 @@ router.post('/', authenticate, requireRole('admin', 'editor'), async (req, res) 
       registrationNumber: body.registrationNumber,
       packingSize: body.packingSize,
       manufacturerLicence: body.manufacturerLicence,
+      imageUrl: body.imageUrl,
+      hazardSymbol: body.hazardSymbol,
       owner_uid: user.uid,
     };
 
