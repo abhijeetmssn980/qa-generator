@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
+import PublicProduct from './pages/PublicProduct';
 import { apiGetMe, apiLogout } from './services/api';
 import type { UserRole } from './services/api';
 import './App.css';
@@ -17,8 +18,18 @@ interface User {
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [publicProductId, setPublicProductId] = useState<string | null>(null);
 
   useEffect(() => {
+    // Check if viewing a public product by hash
+    const hash = window.location.hash;
+    if (hash.startsWith('#product/')) {
+      const productId = hash.replace('#product/', '');
+      setPublicProductId(productId);
+      setLoading(false);
+      return;
+    }
+
     // Verify token with API on load
     const token = localStorage.getItem('token');
     if (token) {
@@ -31,6 +42,22 @@ function App() {
     } else {
       setLoading(false);
     }
+  }, []);
+
+  // Listen for hash changes to support public product links
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash.startsWith('#product/')) {
+        const productId = hash.replace('#product/', '');
+        setPublicProductId(productId);
+      } else {
+        setPublicProductId(null);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   const handleLoginSuccess = (loggedInUser: User) => {
@@ -77,6 +104,11 @@ function App() {
         `}</style>
       </div>
     );
+  }
+
+  // If viewing a public product, show it without requiring login
+  if (publicProductId) {
+    return <PublicProduct uniqueId={publicProductId} />;
   }
 
   if (!user) {

@@ -151,6 +151,9 @@ export async function apiGetProduct(uniqueId: string): Promise<Product> {
   return data.product;
 }
 
+// Alias for clarity when fetching a public product
+export const apiGetProductByUniqueId = apiGetProduct;
+
 export async function apiAddProduct(product: Partial<Product>): Promise<Product> {
   const data = await request<{ product: Product }>('/products', {
     method: 'POST',
