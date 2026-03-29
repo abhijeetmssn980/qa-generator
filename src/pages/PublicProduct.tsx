@@ -84,88 +84,118 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
   }
 
   return (
-    <div className="view-product">
-      <div className="view-product-header">
-        <h1>{product.name}</h1>
-        <p className="view-product-id">ID: {product.uniqueId}</p>
+    <div style={{ background: '#f8fafb', minHeight: '100vh', paddingBottom: '40px' }}>
+      {/* Header */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+        color: 'white',
+        padding: '24px 16px',
+        textAlign: 'center',
+      }}>
+        <h1 style={{ margin: '0 0 8px 0', fontSize: '28px', fontWeight: '700' }}>{product.name}</h1>
+        <p style={{ margin: 0, fontSize: '14px', opacity: 0.9 }}>ID: {product.uniqueId}</p>
       </div>
 
-      <div className="view-product-content">
-        <div className="view-info-group">
-          <label>PRODUCT DETAILS</label>
-          <div className="view-info-row">
-            <div className="view-info-col">
-              <span className="label">Batch Number</span>
-              <span className="value">{product.batch || '—'}</span>
+      {/* Content */}
+      <div style={{ maxWidth: '600px', margin: '0 auto', padding: '16px' }}>
+        {/* Product Details */}
+        <div style={{
+          background: 'white',
+          borderRadius: '8px',
+          padding: '16px',
+          marginBottom: '12px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        }}>
+          <h2 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', color: '#1e293b' }}>
+            PRODUCT DETAILS
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div>
+              <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: '#64748b', fontWeight: '500' }}>Batch Number</p>
+              <p style={{ margin: 0, fontSize: '14px', color: '#1e293b', fontWeight: '500' }}>{product.batch || '—'}</p>
             </div>
-            <div className="view-info-col">
-              <span className="label">Manufacturing Date</span>
-              <span className="value">{product.mfg || '—'}</span>
+            <div>
+              <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: '#64748b', fontWeight: '500' }}>Mfg Date</p>
+              <p style={{ margin: 0, fontSize: '14px', color: '#1e293b', fontWeight: '500' }}>{product.mfg || '—'}</p>
             </div>
-          </div>
-          <div className="view-info-row">
-            <div className="view-info-col">
-              <span className="label">Expiry Date</span>
-              <span className="value" style={{ color: '#dc2626', fontWeight: '600' }}>{product.expiry || '—'}</span>
+            <div>
+              <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: '#64748b', fontWeight: '500' }}>Expiry Date</p>
+              <p style={{ margin: 0, fontSize: '14px', color: '#dc2626', fontWeight: '600' }}>{product.expiry || '—'}</p>
             </div>
-            <div className="view-info-col">
-              <span className="label">Packing Size</span>
-              <span className="value">{product.packingSize || '—'}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="view-info-group">
-          <label>MANUFACTURER INFORMATION</label>
-          <div className="view-info-row">
-            <div className="view-info-col full-width">
-              <span className="label">Manufacturer Name</span>
-              <span className="value">{product.manufacturer || '—'}</span>
-            </div>
-          </div>
-          <div className="view-info-row">
-            <div className="view-info-col full-width">
-              <span className="label">Address</span>
-              <span className="value">{product.manufacturerAddress || '—'}</span>
-            </div>
-          </div>
-          <div className="view-info-row">
-            <div className="view-info-col">
-              <span className="label">Registration Number</span>
-              <span className="value">{product.registrationNumber || '—'}</span>
-            </div>
-            <div className="view-info-col">
-              <span className="label">Licence</span>
-              <span className="value">{product.manufacturerLicence || '—'}</span>
+            <div>
+              <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: '#64748b', fontWeight: '500' }}>Packing Size</p>
+              <p style={{ margin: 0, fontSize: '14px', color: '#1e293b', fontWeight: '500' }}>{product.packingSize || '—'}</p>
             </div>
           </div>
         </div>
 
-        <div className="view-info-group">
-          <label>ADDITIONAL INFORMATION</label>
-          <div className="view-info-row">
-            <div className="view-info-col full-width">
-              <span className="label">Technical Name</span>
-              <span className="value">{product.technicalName || '—'}</span>
+        {/* Manufacturer Info */}
+        <div style={{
+          background: 'white',
+          borderRadius: '8px',
+          padding: '16px',
+          marginBottom: '12px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        }}>
+          <h2 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', color: '#1e293b' }}>
+            MANUFACTURER
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+            <div>
+              <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: '#64748b', fontWeight: '500' }}>Manufacturer Name</p>
+              <p style={{ margin: 0, fontSize: '14px', color: '#1e293b', fontWeight: '500' }}>{product.manufacturer || '—'}</p>
+            </div>
+            <div>
+              <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: '#64748b', fontWeight: '500' }}>Address</p>
+              <p style={{ margin: 0, fontSize: '14px', color: '#1e293b', fontWeight: '500' }}>
+                {product.manufacturerAddress || '—'}
+              </p>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div>
+                <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: '#64748b', fontWeight: '500' }}>Registration</p>
+                <p style={{ margin: 0, fontSize: '13px', color: '#1e293b', fontWeight: '500' }}>
+                  {product.registrationNumber?.slice(0, 20) || '—'}
+                </p>
+              </div>
+              <div>
+                <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: '#64748b', fontWeight: '500' }}>Licence</p>
+                <p style={{ margin: 0, fontSize: '13px', color: '#1e293b', fontWeight: '500' }}>
+                  {product.manufacturerLicence || '—'}
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
-        {product.manufacturerAddress && (
-          <div className="view-info-group">
-            <label>CUSTOMER CARE CONTACT DETAILS</label>
-            <div className="contact-details">
-              <p><strong>🏢</strong> {product.manufacturerAddress}</p>
-              <p><strong>📞</strong> —</p>
-              <p><strong>📧</strong> —</p>
-              <p><strong>🌐</strong> —</p>
+        {/* Additional Info */}
+        {product.technicalName && (
+          <div style={{
+            background: 'white',
+            borderRadius: '8px',
+            padding: '16px',
+            marginBottom: '12px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          }}>
+            <h2 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', color: '#1e293b' }}>
+              ADDITIONAL INFO
+            </h2>
+            <div>
+              <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: '#64748b', fontWeight: '500' }}>Technical Name</p>
+              <p style={{ margin: 0, fontSize: '14px', color: '#1e293b', fontWeight: '500' }}>{product.technicalName}</p>
             </div>
           </div>
         )}
       </div>
 
-      <div className="view-footer">
-        <p>Powered by <strong>AP Solutions</strong></p>
+      {/* Footer */}
+      <div style={{
+        textAlign: 'center',
+        padding: '20px 16px',
+        color: '#888',
+        fontSize: '14px',
+      }}>
+        <p style={{ margin: 0 }}>Powered by <strong>AP Solutions</strong></p>
       </div>
     </div>
   );
