@@ -586,6 +586,29 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
+/* Date input calendar icon styling */
+.form-group input[type="date"] {
+  padding-right: 40px;
+  background-image: none;
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  clip-path: polygon(0 0, calc(100% - 40px) 0, calc(100% - 40px) 100%, 0 100%);
+}
+
+.form-group input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  border-radius: 4px;
+  margin-right: 4px;
+  opacity: 0.8;
+  filter: invert(0.3);
+  transition: opacity 0.2s, filter 0.2s;
+}
+
+.form-group input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  filter: invert(0.15);
+}
+
 .submit-btn {
   width: 140px;
   align-self: flex-start;
