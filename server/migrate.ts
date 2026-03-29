@@ -9,10 +9,14 @@ async function migrate() {
     // Users table
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
-        uid          VARCHAR(100) PRIMARY KEY,
-        email        VARCHAR(255) UNIQUE NOT NULL,
-        password     VARCHAR(255) NOT NULL,
-        created_at   TIMESTAMPTZ DEFAULT NOW()
+        uid               VARCHAR(100) PRIMARY KEY,
+        email             VARCHAR(255) UNIQUE NOT NULL,
+        password          VARCHAR(255) NOT NULL,
+        company_name      VARCHAR(255),
+        company_logo      VARCHAR(500),
+        company_address   TEXT,
+        role              VARCHAR(50) DEFAULT 'viewer',
+        created_at        TIMESTAMPTZ DEFAULT NOW()
       );
     `);
 
@@ -32,6 +36,8 @@ async function migrate() {
         registration_number   VARCHAR(255),
         packing_size          VARCHAR(100),
         manufacturer_licence  VARCHAR(255),
+        owner_uid             VARCHAR(100) REFERENCES users(uid),
+        active                VARCHAR(1) DEFAULT 'Y',
         created_at            TIMESTAMPTZ DEFAULT NOW()
       );
     `);
