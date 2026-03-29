@@ -55,6 +55,7 @@ const SAMPLE_PRODUCTS = [
     packingSize: '1 KG',
     manufacturerLicence: 'PB/AGRI/PP/2021/4',
     imageUrl: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde9f?w=400&h=300&fit=crop',
+    hazardSymbol: '☠️ Toxic',
     owner_uid: 'demo-admin-001',
   },
   {
@@ -71,6 +72,7 @@ const SAMPLE_PRODUCTS = [
     packingSize: '500 GM',
     manufacturerLicence: 'PB/AGRI/PP/2022/8',
     imageUrl: 'https://images.unsplash.com/photo-1584308666744-24d5f3f3f96d?w=400&h=300&fit=crop',
+    hazardSymbol: '⚠️ Health Hazard',
     owner_uid: 'demo-admin-001',
   },
   {
@@ -87,6 +89,7 @@ const SAMPLE_PRODUCTS = [
     packingSize: '250 ML',
     manufacturerLicence: 'PB/AGRI/PP/2023/12',
     imageUrl: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=400&h=300&fit=crop',
+    hazardSymbol: '🧪 Irritant',
     owner_uid: 'demo-admin-001',
   },
   {
@@ -103,6 +106,7 @@ const SAMPLE_PRODUCTS = [
     packingSize: '2 KG',
     manufacturerLicence: 'MH/AGRI/PP/2024/2',
     imageUrl: 'https://images.unsplash.com/photo-1585314317383-c7db3963a3a2?w=400&h=300&fit=crop',
+    hazardSymbol: '☠️ Toxic',
     owner_uid: 'demo-admin-002',
   },
   {
@@ -119,6 +123,7 @@ const SAMPLE_PRODUCTS = [
     packingSize: '1 LTR',
     manufacturerLicence: 'MH/AGRI/PP/2025/6',
     imageUrl: 'https://images.unsplash.com/photo-1576091160550-112173f7f869?w=400&h=300&fit=crop',
+    hazardSymbol: '⚠️ Health Hazard',
     owner_uid: 'demo-admin-002',
   },
 ];

@@ -17,6 +17,7 @@ export interface Product {
   packingSize?: string;
   manufacturerLicence?: string;
   imageUrl?: string;
+  hazardSymbol?: string; // e.g. '☠️ Toxic', '🔥 Flammable'
   owner_uid?: string;
   active?: string; // 'Y' or 'N'
 }
@@ -52,6 +53,7 @@ function rowToProduct(row: any): Product {
     packingSize: row.packing_size,
     manufacturerLicence: row.manufacturer_licence,
     imageUrl: row.image_url,
+    hazardSymbol: row.hazard_symbol,
     owner_uid: row.owner_uid,
     active: row.active || 'Y',
   };
@@ -95,8 +97,8 @@ export async function getProductByUniqueId(uniqueId: string): Promise<Product | 
 
 export async function addProduct(product: Product): Promise<Product> {
   const { rows } = await pool.query(
-    `INSERT INTO products (unique_id, name, batch, mfg, expiry, short_url, manufacturer, manufacturer_address, technical_name, registration_number, packing_size, manufacturer_licence, image_url, owner_uid)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+    `INSERT INTO products (unique_id, name, batch, mfg, expiry, short_url, manufacturer, manufacturer_address, technical_name, registration_number, packing_size, manufacturer_licence, image_url, hazard_symbol, owner_uid)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
      RETURNING *`,
     [
       product.uniqueId,
@@ -112,6 +114,7 @@ export async function addProduct(product: Product): Promise<Product> {
       product.packingSize || null,
       product.manufacturerLicence || null,
       product.imageUrl || null,
+      product.hazardSymbol || null,
       product.owner_uid || null,
     ]
   );

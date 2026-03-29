@@ -37,6 +37,7 @@ async function migrate() {
         packing_size          VARCHAR(100),
         manufacturer_licence  VARCHAR(255),
         image_url             VARCHAR(500),
+        hazard_symbol         VARCHAR(100),
         owner_uid             VARCHAR(100) REFERENCES users(uid),
         active                VARCHAR(1) DEFAULT 'Y',
         created_at            TIMESTAMPTZ DEFAULT NOW()

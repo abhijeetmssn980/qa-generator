@@ -116,6 +116,29 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
 
       {/* Content */}
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '16px' }}>
+        {/* Hazard Symbol Alert */}
+        {product.hazardSymbol && (
+          <div style={{
+            background: 'white',
+            borderRadius: '8px',
+            padding: '16px',
+            marginBottom: '12px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            border: '2px solid #dc2626',
+            textAlign: 'center',
+          }}>
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>
+              {product.hazardSymbol.split(' ')[0]}
+            </div>
+            <p style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#dc2626' }}>
+              {product.hazardSymbol}
+            </p>
+            <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#666' }}>
+              Handle with care — see precautions
+            </p>
+          </div>
+        )}
+
         {/* Product Details */}
         <div style={{
           background: 'white',

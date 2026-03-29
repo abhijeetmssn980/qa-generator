@@ -140,6 +140,7 @@ export interface Product {
   packingSize?: string;
   manufacturerLicence?: string;
   imageUrl?: string;
+  hazardSymbol?: string;
 }
 
 export async function apiGetProducts(): Promise<Product[]> {

@@ -17,6 +17,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
     registrationNumber: '',
     manufacturerLicence: '',
     imageUrl: '',
+    hazardSymbol: '',
   });
   const [addedProduct, setAddedProduct] = useState<any>(null);
 
@@ -44,13 +45,14 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
       packingSize: form.packing,
       manufacturerLicence: form.manufacturerLicence || '',
       imageUrl: form.imageUrl || '',
+      hazardSymbol: form.hazardSymbol || '',
     };
     
     setAddedProduct(product);
     if (onProductAdded) {
       onProductAdded(product);
     }
-    setForm({ name: '', batch: '', manufacturer: '', expiry: '', packing: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '' });
+    setForm({ name: '', batch: '', manufacturer: '', expiry: '', packing: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardSymbol: '' });
   };
 
   return (
@@ -103,6 +105,21 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
             <div className="form-group single">
               <label>PRODUCT IMAGE URL</label>
               <input name="imageUrl" type="url" value={form.imageUrl} onChange={handleChange} placeholder="https://example.com/image.jpg" />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group single">
+              <label>HAZARD SYMBOL</label>
+              <select name="hazardSymbol" value={form.hazardSymbol} onChange={handleChange}>
+                <option value="">--Select--</option>
+                <option value="☠️ Toxic">☠️ Toxic</option>
+                <option value="⚠️ Health Hazard">⚠️ Health Hazard</option>
+                <option value="🧪 Irritant">🧪 Irritant</option>
+                <option value="🔥 Flammable">🔥 Flammable</option>
+                <option value="⚛️ Reactive">⚛️ Reactive</option>
+                <option value="🌍 Environmental">🌍 Environmental</option>
+              </select>
             </div>
           </div>
 
