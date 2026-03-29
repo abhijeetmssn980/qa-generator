@@ -1,24 +1,24 @@
 import React, { useState } from 'react';
+import { apiLogin } from '../services/api';
+import type { UserRole } from '../services/api';
 import '../styles/Login.css';
 
 interface LoginProps {
-  onLoginSuccess: (user: { email: string; uid: string }) => void;
+  onLoginSuccess: (user: {
+    email: string;
+    uid: string;
+    companyName?: string;
+    companyLogo?: string;
+    companyAddress?: string;
+    role?: UserRole;
+  }) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  // Test credentials
-  const TEST_USER = {
-    email: 'demo@example.com',
-    password: 'demo123456',
-    uid: 'test-user-123',
-  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,60 +26,27 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     setLoading(true);
 
     try {
-      if (isSignUp) {
-        // Sign up validation
-        if (password !== confirmPassword) {
-          setError('Passwords do not match');
-          setLoading(false);
-          return;
-        }
-        if (password.length < 6) {
-          setError('Password must be at least 6 characters');
-          setLoading(false);
-          return;
-        }
-
-        // Create test user in memory
-        const newUser = {
-          email,
-          password,
-          uid: `user-${Date.now()}`,
-        };
-
-        // Store in localStorage for demo
-        localStorage.setItem('testUser', JSON.stringify(newUser));
-        onLoginSuccess(newUser);
-      } else {
-        // Sign in - check against test user or stored users
-        if (email === TEST_USER.email && password === TEST_USER.password) {
-          onLoginSuccess({ email: TEST_USER.email, uid: TEST_USER.uid });
-        } else {
-          // Check if stored user
-          const stored = localStorage.getItem('testUser');
-          if (stored) {
-            const storedUser = JSON.parse(stored);
-            if (storedUser.email === email && storedUser.password === password) {
-              onLoginSuccess(storedUser);
-            } else {
-              setError('Invalid email or password');
-            }
-          } else {
-            setError('Invalid email or password. Use demo@example.com / demo123456');
-          }
-        }
-      }
-    } catch (err) {
-      setError('Login failed. Please try again.');
+      const data = await apiLogin(email, password);
+      onLoginSuccess(data.user);
+    } catch (err: any) {
+      setError(err.message || 'Login failed. Please try again.');
     }
 
     setLoading(false);
   };
 
-  const handleDemoLogin = (e: React.FormEvent) => {
+  const handleDemoLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setEmail(TEST_USER.email);
-    setPassword(TEST_USER.password);
-    setIsSignUp(false);
+    setError('');
+    setLoading(true);
+
+    try {
+      const data = await apiLogin('demo@example.com', 'demo123456');
+      onLoginSuccess(data.user);
+    } catch (err: any) {
+      setError(err.message || 'Demo login failed. Please try again.');
+      setLoading(false);
+    }
   };
 
   return (
@@ -89,11 +56,14 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         <div className="login-left">
           <div className="login-branding">
             <div className="login-logo">
-              <div className="logo-q">Q</div>
-              <div className="logo-a">A</div>
+              <div className="logo-q">A</div>
+              <div className="logo-a">P</div>
             </div>
-            <h1 className="login-title">QA Generator</h1>
+            <h1 className="login-title">AP Solutions</h1>
             <p className="login-subtitle">Pharmaceutical Quality Assurance</p>
+            <div style={{ marginTop: '20px', padding: '12px', background: '#f3f4f6', borderRadius: '8px', fontSize: '13px', color: '#666' }}>
+              <strong>Note:</strong> Self-registration is disabled. Please contact your administrator to create an account.
+            </div>
           </div>
 
           <div className="login-features">
@@ -118,14 +88,8 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         {/* Right Side - Login Form */}
         <div className="login-right">
           <div className="form-card">
-            <h2 className="form-title">
-              {isSignUp ? 'Create Account' : 'Welcome Back'}
-            </h2>
-            <p className="form-subtitle">
-              {isSignUp
-                ? 'Sign up to get started'
-                : 'Sign in to your account'}
-            </p>
+            <h2 className="form-title">Sign In</h2>
+            <p className="form-subtitle">Sign in to your account</p>
 
             <form onSubmit={handleLogin}>
               {/* Email Input */}
@@ -156,24 +120,6 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 />
               </div>
 
-              {/* Confirm Password (Sign Up Only) */}
-              {isSignUp && (
-                <div className="form-group">
-                  <label htmlFor="confirm-password">
-                    Confirm Password
-                  </label>
-                  <input
-                    id="confirm-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    disabled={loading}
-                  />
-                </div>
-              )}
-
               {/* Error Message */}
               {error && <div className="error-message">{error}</div>}
 
@@ -183,54 +129,24 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 className="btn-login"
                 disabled={loading}
               >
-                {loading
-                  ? isSignUp
-                    ? 'Creating Account...'
-                    : 'Signing In...'
-                  : isSignUp
-                    ? 'Create Account'
-                    : 'Sign In'}
+                {loading ? 'Signing In...' : 'Sign In'}
               </button>
 
               {/* Demo Login */}
-              {!isSignUp && (
-                <button
-                  type="button"
-                  className="btn-demo"
-                  onClick={handleDemoLogin}
-                  disabled={loading}
-                >
-                  Try Demo
-                </button>
-              )}
+              <button
+                type="button"
+                className="btn-demo"
+                onClick={handleDemoLogin}
+                disabled={loading}
+              >
+                Try Demo
+              </button>
             </form>
-
-            {/* Toggle Between Sign In and Sign Up */}
-            <div className="toggle-auth">
-              <p>
-                {isSignUp
-                  ? 'Already have an account? '
-                  : "Don't have an account? "}
-                <button
-                  type="button"
-                  className="toggle-button"
-                  onClick={() => {
-                    setIsSignUp(!isSignUp);
-                    setError('');
-                    setConfirmPassword('');
-                  }}
-                  disabled={loading}
-                >
-                  {isSignUp ? 'Sign In' : 'Sign Up'}
-                </button>
-              </p>
-            </div>
 
             {/* Footer */}
             <div className="login-footer">
               <p>
-                By signing in, you agree to our Terms of Service and Privacy
-                Policy
+                Need an account? Contact your administrator for access.
               </p>
             </div>
           </div>

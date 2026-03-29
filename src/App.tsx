@@ -1,11 +1,17 @@
 import { useState, useEffect } from 'react';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
+import { apiGetMe, apiLogout } from './services/api';
+import type { UserRole } from './services/api';
 import './App.css';
 
 interface User {
   email: string;
   uid: string;
+  companyName?: string;
+  companyLogo?: string;
+  companyAddress?: string;
+  role?: UserRole;
 }
 
 function App() {
@@ -13,26 +19,27 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in (from localStorage)
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch {
-        localStorage.removeItem('currentUser');
-      }
+    // Verify token with API on load
+    const token = localStorage.getItem('token');
+    if (token) {
+      apiGetMe()
+        .then((data) => setUser(data.user))
+        .catch(() => {
+          apiLogout();
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const handleLoginSuccess = (loggedInUser: User) => {
     setUser(loggedInUser);
-    localStorage.setItem('currentUser', JSON.stringify(loggedInUser));
   };
 
   const handleLogout = () => {
     setUser(null);
-    localStorage.removeItem('currentUser');
+    apiLogout();
   };
 
   if (loading) {

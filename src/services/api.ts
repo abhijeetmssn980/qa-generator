@@ -1,0 +1,211 @@
+// API client — talks to the Node.js backend
+
+const API_BASE = 'http://localhost:3001/api';
+
+function getToken(): string | null {
+  return localStorage.getItem('token');
+}
+
+async function request<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const token = getToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
+    headers,
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error || `Request failed (${res.status})`);
+  }
+
+  return data as T;
+}
+
+// ── Auth ──
+export type UserRole = 'admin' | 'editor' | 'viewer';
+
+export interface AuthResponse {
+  token: string;
+  user: {
+    uid: string;
+    email: string;
+    companyName?: string;
+    companyLogo?: string;
+    companyAddress?: string;
+    role?: UserRole;
+  };
+}
+
+export async function apiLogin(email: string, password: string): Promise<AuthResponse> {
+  const data = await request<AuthResponse>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+  localStorage.setItem('token', data.token);
+  localStorage.setItem('currentUser', JSON.stringify(data.user));
+  return data;
+}
+
+export async function apiSignup(
+  _email: string,
+  _password: string,
+  _companyName?: string,
+  _companyLogo?: string,
+  _companyAddress?: string
+): Promise<AuthResponse> {
+  // Signup disabled - always throw error
+  throw new Error('Self-registration is disabled. Contact your administrator to create an account.');
+}
+
+export async function apiGetMe(): Promise<{
+  user: {
+    uid: string;
+    email: string;
+    companyName?: string;
+    companyLogo?: string;
+    companyAddress?: string;
+    role?: UserRole;
+  };
+}> {
+  return request('/auth/me');
+}
+
+export async function apiCreateUser(
+  email: string,
+  password: string,
+  companyName?: string,
+  companyLogo?: string,
+  companyAddress?: string,
+  role?: UserRole
+): Promise<{ message: string; user: { uid: string; email: string; companyName?: string; role: string } }> {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    throw new Error('Not authenticated');
+  }
+  return request('/auth/create-user', {
+    method: 'POST',
+    body: JSON.stringify({ email, password, companyName, companyLogo, companyAddress, role }),
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+}
+
+export async function apiUploadLogo(file: File): Promise<{ url: string }> {
+  const token = localStorage.getItem('token');
+  const formData = new FormData();
+  formData.append('logo', file);
+
+  const res = await fetch(`${API_BASE}/auth/upload-logo`, {
+    method: 'POST',
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    body: formData,
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Logo upload failed');
+  }
+  return data;
+}
+
+export function apiLogout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('currentUser');
+}
+
+// ── Products ──
+export interface Product {
+  id: number | string;
+  uniqueId: string;
+  name: string;
+  batch: string;
+  mfg: string;
+  expiry: string;
+  shortUrl: string;
+  manufacturer?: string;
+  manufacturerAddress?: string;
+  technicalName?: string;
+  registrationNumber?: string;
+  packingSize?: string;
+  manufacturerLicence?: string;
+}
+
+export async function apiGetProducts(): Promise<Product[]> {
+  const data = await request<{ products: Product[] }>('/products');
+  return data.products;
+}
+
+export async function apiGetProduct(uniqueId: string): Promise<Product> {
+  const data = await request<{ product: Product }>(`/products/${uniqueId}`);
+  return data.product;
+}
+
+export async function apiAddProduct(product: Partial<Product>): Promise<Product> {
+  const data = await request<{ product: Product }>('/products', {
+    method: 'POST',
+    body: JSON.stringify(product),
+  });
+  return data.product;
+}
+
+export async function apiUpdateProduct(uniqueId: string, updates: Partial<Product>): Promise<Product> {
+  const data = await request<{ product: Product }>(`/products/${uniqueId}`, {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+  });
+  return data.product;
+}
+
+export async function apiDeleteProduct(uniqueId: string): Promise<void> {
+  await request(`/products/${uniqueId}`, { method: 'DELETE' });
+}
+
+export async function apiGetTrashProducts(): Promise<Product[]> {
+  const data = await request<{ products: Product[] }>('/products/trash/list');
+  return data.products;
+}
+
+export async function apiRestoreProduct(uniqueId: string): Promise<void> {
+  await request(`/products/${uniqueId}/restore`, { method: 'POST' });
+}
+
+export async function apiPermanentDeleteProduct(uniqueId: string): Promise<void> {
+  await request(`/products/${uniqueId}/permanent`, { method: 'DELETE' });
+}
+
+export interface BulkUploadResult {
+  message: string;
+  inserted: number;
+  skipped: number;
+  errors: string[];
+  totalRows: number;
+}
+
+export async function apiBulkUploadProducts(file: File): Promise<BulkUploadResult> {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch(`${API_BASE}/products/bulk-upload`, {
+    method: 'POST',
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    body: formData, // don't set Content-Type — browser sets multipart boundary
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || `Upload failed (${res.status})`);
+  }
+  return data as BulkUploadResult;
+}

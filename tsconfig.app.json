@@ -24,5 +24,10 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": [
+    "src/services/postgres.ts",
+    "src/services/cloudsql.ts",
+    "src/services/POSTGRES_ADAPTER_README.md"
+  ]
 }

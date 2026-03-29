@@ -22,11 +22,11 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', showText = true }) => {
         viewBox="0 0 120 120"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Background circle for Q */}
+        {/* Background circle for A */}
         <circle cx="45" cy="60" r="32" fill="none" stroke="white" strokeWidth="3" opacity="0.9" />
         <circle cx="45" cy="60" r="28" fill="none" stroke="#fbbf24" strokeWidth="1.5" opacity="0.5" />
 
-        {/* Q in white */}
+        {/* A in white */}
         <text
           x="45"
           y="68"
@@ -36,14 +36,14 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', showText = true }) => {
           textAnchor="middle"
           dominantBaseline="middle"
         >
-          Q
+          A
         </text>
 
-        {/* Background circle for A */}
+        {/* Background circle for P */}
         <circle cx="80" cy="60" r="32" fill="none" stroke="#fbbf24" strokeWidth="3" opacity="0.9" />
         <circle cx="80" cy="60" r="28" fill="none" stroke="white" strokeWidth="1.5" opacity="0.5" />
 
-        {/* A in orange */}
+        {/* P in orange */}
         <text
           x="80"
           y="68"
@@ -53,7 +53,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', showText = true }) => {
           textAnchor="middle"
           dominantBaseline="middle"
         >
-          A
+          P
         </text>
 
         {/* Decorative gear - top left */}
@@ -80,8 +80,8 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', showText = true }) => {
               textShadow: '0 2px 4px rgba(0,0,0,0.2)'
             }}
           >
-            <span style={{ color: 'white' }}>QA</span>
-            <span style={{ color: '#fbbf24' }}>Generator</span>
+            <span style={{ color: 'white' }}>AP</span>
+            <span style={{ color: '#fbbf24' }}>Solutions</span>
           </div>
         </div>
       )}

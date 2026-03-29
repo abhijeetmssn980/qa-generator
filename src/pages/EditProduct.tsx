@@ -1,0 +1,117 @@
+import React, { useState } from 'react';
+import type { Product } from '../services/api';
+
+interface EditProductProps {
+  product: Product;
+  onSave: (uniqueId: string, updates: Partial<Product>) => void;
+  onCancel: () => void;
+}
+
+const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) => {
+  const [form, setForm] = useState({
+    name: product.name || '',
+    batch: product.batch || '',
+    mfg: product.mfg || '',
+    expiry: product.expiry || '',
+    manufacturer: product.manufacturer || '',
+    manufacturerAddress: product.manufacturerAddress || '',
+    technicalName: product.technicalName || '',
+    registrationNumber: product.registrationNumber || '',
+    packingSize: product.packingSize || '',
+    manufacturerLicence: product.manufacturerLicence || '',
+  });
+  const [saving, setSaving] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await onSave(product.uniqueId, form);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="add-product-wrapper">
+      <div className="add-product-header">
+        <h1>Edit Product</h1>
+        <div className="header-actions">
+          <button type="button" className="secondary-btn" onClick={onCancel}>
+            ← Back to List
+          </button>
+        </div>
+      </div>
+      <div className="content-card">
+        <form className="add-product-form" onSubmit={handleSubmit}>
+          <div className="form-grid">
+            <div className="form-group">
+              <label>Product Name</label>
+              <input name="name" value={form.name} onChange={handleChange} placeholder="Product name" required />
+            </div>
+            <div className="form-group">
+              <label>Batch Number</label>
+              <input name="batch" value={form.batch} onChange={handleChange} placeholder="Batch number" />
+            </div>
+            <div className="form-group">
+              <label>Manufacturing Date</label>
+              <input name="mfg" value={form.mfg} onChange={handleChange} placeholder="e.g. 03/26" />
+            </div>
+            <div className="form-group">
+              <label>Expiry Date</label>
+              <input name="expiry" value={form.expiry} onChange={handleChange} placeholder="e.g. 02/28" />
+            </div>
+            <div className="form-group">
+              <label>Manufacturer</label>
+              <input name="manufacturer" value={form.manufacturer} onChange={handleChange} placeholder="Manufacturer name" />
+            </div>
+            <div className="form-group">
+              <label>Manufacturer Address</label>
+              <input name="manufacturerAddress" value={form.manufacturerAddress} onChange={handleChange} placeholder="Full address" />
+            </div>
+            <div className="form-group">
+              <label>Technical Name</label>
+              <input name="technicalName" value={form.technicalName} onChange={handleChange} placeholder="Technical name" />
+            </div>
+            <div className="form-group">
+              <label>Registration Number</label>
+              <input name="registrationNumber" value={form.registrationNumber} onChange={handleChange} placeholder="Registration #" />
+            </div>
+            <div className="form-group">
+              <label>Packing Size</label>
+              <input name="packingSize" value={form.packingSize} onChange={handleChange} placeholder="e.g. 1 KG" />
+            </div>
+            <div className="form-group">
+              <label>Manufacturer Licence</label>
+              <input name="manufacturerLicence" value={form.manufacturerLicence} onChange={handleChange} placeholder="Licence #" />
+            </div>
+          </div>
+
+          <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
+            <button type="submit" className="primary-btn" disabled={saving}>
+              {saving ? '⏳ Saving...' : '💾 Save Changes'}
+            </button>
+            <button type="button" className="secondary-btn" onClick={onCancel}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Read-only info */}
+      <div className="content-card" style={{ marginTop: '16px', padding: '16px', background: '#f8fafc' }}>
+        <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', fontSize: '13px', color: '#64748b' }}>
+          <span><strong>Unique ID:</strong> {product.uniqueId}</span>
+          <span><strong>Short URL:</strong> {product.shortUrl}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default EditProduct;

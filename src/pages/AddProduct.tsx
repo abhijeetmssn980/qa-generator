@@ -12,6 +12,10 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
     manufacturer: '',
     expiry: '',
     packing: '',
+    manufacturerAddress: '',
+    technicalName: '',
+    registrationNumber: '',
+    manufacturerLicence: '',
   });
   const [addedProduct, setAddedProduct] = useState<any>(null);
 
@@ -32,19 +36,19 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
       mfg: form.manufacturer,
       expiry: form.expiry,
       shortUrl: `qr-1.in/a.php?x=${uniqueId}`,
-      manufacturer: 'FRONTLINE AGRI SCIENCE',
-      manufacturerAddress: 'Gill Patti Nehian Wale Road, Tehsil Goniana, District Bathinda, Punjab, India (151201)',
-      technicalName: 'Emamectin Benzoate 5% SG',
-      registrationNumber: 'CIR-1B7889/2021-Emamectin Benzoate (SG) (4325)-2288',
+      manufacturer: form.manufacturer || '',
+      manufacturerAddress: form.manufacturerAddress || '',
+      technicalName: form.technicalName || '',
+      registrationNumber: form.registrationNumber || '',
       packingSize: form.packing,
-      manufacturerLicence: 'PB/AGRI/PP/2021/4'
+      manufacturerLicence: form.manufacturerLicence || ''
     };
     
     setAddedProduct(product);
     if (onProductAdded) {
       onProductAdded(product);
     }
-    setForm({ name: '', batch: '', manufacturer: '', expiry: '', packing: '' });
+    setForm({ name: '', batch: '', manufacturer: '', expiry: '', packing: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '' });
   };
 
   return (
