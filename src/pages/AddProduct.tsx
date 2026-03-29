@@ -16,6 +16,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
     technicalName: '',
     registrationNumber: '',
     manufacturerLicence: '',
+    imageUrl: '',
   });
   const [addedProduct, setAddedProduct] = useState<any>(null);
 
@@ -41,14 +42,15 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
       technicalName: form.technicalName || '',
       registrationNumber: form.registrationNumber || '',
       packingSize: form.packing,
-      manufacturerLicence: form.manufacturerLicence || ''
+      manufacturerLicence: form.manufacturerLicence || '',
+      imageUrl: form.imageUrl || '',
     };
     
     setAddedProduct(product);
     if (onProductAdded) {
       onProductAdded(product);
     }
-    setForm({ name: '', batch: '', manufacturer: '', expiry: '', packing: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '' });
+    setForm({ name: '', batch: '', manufacturer: '', expiry: '', packing: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '' });
   };
 
   return (
@@ -94,6 +96,13 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
             <div className="form-group single">
               <label>EXPIRY DATE</label>
               <input name="expiry" type="date" value={form.expiry} onChange={handleChange} />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group single">
+              <label>PRODUCT IMAGE URL</label>
+              <input name="imageUrl" type="url" value={form.imageUrl} onChange={handleChange} placeholder="https://example.com/image.jpg" />
             </div>
           </div>
 

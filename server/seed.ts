@@ -54,6 +54,7 @@ const SAMPLE_PRODUCTS = [
     registrationNumber: 'CIR-1B7889/2021-Emamectin Benzoate (SG) (4325)-2288',
     packingSize: '1 KG',
     manufacturerLicence: 'PB/AGRI/PP/2021/4',
+    imageUrl: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde9f?w=400&h=300&fit=crop',
     owner_uid: 'demo-admin-001',
   },
   {
@@ -69,6 +70,7 @@ const SAMPLE_PRODUCTS = [
     registrationNumber: 'CIR-2245/2022-Thiamethoxam (WG) (5610)-3102',
     packingSize: '500 GM',
     manufacturerLicence: 'PB/AGRI/PP/2022/8',
+    imageUrl: 'https://images.unsplash.com/photo-1584308666744-24d5f3f3f96d?w=400&h=300&fit=crop',
     owner_uid: 'demo-admin-001',
   },
   {
@@ -84,6 +86,7 @@ const SAMPLE_PRODUCTS = [
     registrationNumber: 'CIR-3367/2023-Imidacloprid (SL) (1127)-4415',
     packingSize: '250 ML',
     manufacturerLicence: 'PB/AGRI/PP/2023/12',
+    imageUrl: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=400&h=300&fit=crop',
     owner_uid: 'demo-admin-001',
   },
   {
@@ -99,6 +102,7 @@ const SAMPLE_PRODUCTS = [
     registrationNumber: 'CIR-4489/2024-Mancozeb (WP) (7821)-5503',
     packingSize: '2 KG',
     manufacturerLicence: 'MH/AGRI/PP/2024/2',
+    imageUrl: 'https://images.unsplash.com/photo-1585314317383-c7db3963a3a2?w=400&h=300&fit=crop',
     owner_uid: 'demo-admin-002',
   },
   {
@@ -114,6 +118,7 @@ const SAMPLE_PRODUCTS = [
     registrationNumber: 'CIR-5591/2025-Chlorpyrifos (EC) (2034)-6691',
     packingSize: '1 LTR',
     manufacturerLicence: 'MH/AGRI/PP/2025/6',
+    imageUrl: 'https://images.unsplash.com/photo-1576091160550-112173f7f869?w=400&h=300&fit=crop',
     owner_uid: 'demo-admin-002',
   },
 ];

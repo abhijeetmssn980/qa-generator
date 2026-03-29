@@ -139,6 +139,7 @@ export interface Product {
   registrationNumber?: string;
   packingSize?: string;
   manufacturerLicence?: string;
+  imageUrl?: string;
 }
 
 export async function apiGetProducts(): Promise<Product[]> {

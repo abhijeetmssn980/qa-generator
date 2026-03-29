@@ -96,6 +96,24 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
         <p style={{ margin: 0, fontSize: '14px', opacity: 0.9 }}>ID: {product.uniqueId}</p>
       </div>
 
+      {/* Product Image */}
+      {product.imageUrl && (
+        <div style={{ maxWidth: '600px', margin: '0 auto', padding: '16px' }}>
+          <img 
+            src={product.imageUrl} 
+            alt={product.name}
+            style={{
+              width: '100%',
+              maxHeight: '400px',
+              objectFit: 'cover',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              marginBottom: '16px',
+            }}
+          />
+        </div>
+      )}
+
       {/* Content */}
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '16px' }}>
         {/* Product Details */}
