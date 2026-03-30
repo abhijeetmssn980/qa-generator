@@ -1,7 +1,25 @@
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
-import { findUserByEmail, addUser, getProducts, addProduct } from './db';
+import { findUserByEmail, addUser, getProducts, addProduct, getCompanyByName, addCompany } from './db';
 import pool from './pool';
+
+// Demo companies
+const DEMO_COMPANIES = [
+  {
+    name: 'AP Demo Company',
+    address: '123 Demo Street, New Delhi, India',
+    phone: '011-12345678',
+    email: 'info@apdemo.com',
+    website: 'www.apdemo.com',
+  },
+  {
+    name: 'Pharma Solutions Ltd',
+    address: '456 Pharma Road, Mumbai, India',
+    phone: '022-87654321',
+    email: 'info@pharma.com',
+    website: 'www.pharmasolutions.com',
+  },
+];
 
 // Demo users with different companies
 const DEMO_USERS = [
@@ -129,16 +147,38 @@ const SAMPLE_PRODUCTS = [
 ];
 
 async function seed() {
+  // 0. Seed demo companies first
+  const companyMap: { [key: string]: number } = {};
+  for (const company of DEMO_COMPANIES) {
+    const existing = await getCompanyByName(company.name);
+    if (existing) {
+      companyMap[company.name] = existing.id!;
+      console.log(`⏩ Company already exists: ${company.name}`);
+    } else {
+      const created = await addCompany({
+        name: company.name,
+        address: company.address,
+        phone: company.phone,
+        email: company.email,
+        website: company.website,
+      });
+      companyMap[company.name] = created.id!;
+      console.log(`✅ Company created: ${company.name} (ID: ${created.id})`);
+    }
+  }
+
   // 1. Seed demo users
   for (const demoUser of DEMO_USERS) {
     const existing = await findUserByEmail(demoUser.email);
     if (!existing) {
       const hashed = await bcrypt.hash(demoUser.password, 10);
+      const companyId = companyMap[demoUser.companyName];
       await addUser({
         uid: demoUser.uid,
         email: demoUser.email,
         password: hashed,
         createdAt: new Date().toISOString(),
+        companyId: companyId,
         companyName: demoUser.companyName,
         companyAddress: demoUser.companyAddress,
         role: demoUser.role as any,
