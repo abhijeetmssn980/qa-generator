@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { apiCreateCompany } from '../services/api';
+import React, { useState, useRef } from 'react';
+import { apiCreateCompany, apiUploadLogo } from '../services/api';
 import type { Company } from '../services/api';
 
 interface CreateCompanyProps {
@@ -17,8 +17,12 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
     website: '',
   });
 
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -26,6 +30,18 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setLogoPreview(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,6 +56,19 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
       }
 
       const createdCompany = await apiCreateCompany(formData);
+      
+      // Upload logo if provided
+      if (logoFile && createdCompany.id) {
+        try {
+          setLogoUploading(true);
+          await apiUploadLogo(logoFile, createdCompany.id);
+        } catch (logoErr: any) {
+          console.error('Logo upload error (non-fatal):', logoErr.message);
+        } finally {
+          setLogoUploading(false);
+        }
+      }
+
       setFormData({
         name: '',
         logo: undefined,
@@ -48,6 +77,10 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
         email: '',
         website: '',
       });
+      setLogoFile(null);
+      setLogoPreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      
       onCompanyCreated(createdCompany);
     } catch (err: any) {
       setError(err.message || 'Failed to create company');
@@ -191,6 +224,41 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
           />
         </div>
 
+        {/* Logo Upload */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#374151' }}>
+            Company Logo
+          </label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/svg+xml,image/webp"
+              onChange={handleLogoSelect}
+              disabled={loading}
+              style={{
+                flex: 1,
+                fontSize: '13px',
+                padding: '8px',
+              }}
+            />
+            {logoUploading && <span style={{ fontSize: '13px', color: '#6366f1' }}>⏳ Uploading...</span>}
+            {logoPreview && !logoUploading && (
+              <img
+                src={logoPreview}
+                alt="Logo preview"
+                style={{
+                  width: '50px',
+                  height: '50px',
+                  objectFit: 'contain',
+                  borderRadius: '6px',
+                  border: '1px solid #e2e8f0',
+                }}
+              />
+            )}
+          </div>
+        </div>
+
         {/* Website */}
         <div style={{ marginBottom: '28px' }}>
           <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#374151' }}>
@@ -242,23 +310,23 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
           </button>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || logoUploading}
             style={{
               padding: '12px 28px',
               borderRadius: '6px',
               border: 'none',
               backgroundColor: '#3b82f6',
               color: 'white',
-              cursor: loading ? 'not-allowed' : 'pointer',
+              cursor: (loading || logoUploading) ? 'not-allowed' : 'pointer',
               fontSize: '14px',
               fontWeight: '600',
               transition: 'all 0.2s',
-              opacity: loading ? 0.7 : 1,
+              opacity: (loading || logoUploading) ? 0.7 : 1,
             }}
-            onMouseEnter={(e) => !loading && (e.currentTarget.style.backgroundColor = '#2563eb')}
-            onMouseLeave={(e) => !loading && (e.currentTarget.style.backgroundColor = '#3b82f6')}
+            onMouseEnter={(e) => !(loading || logoUploading) && (e.currentTarget.style.backgroundColor = '#2563eb')}
+            onMouseLeave={(e) => !(loading || logoUploading) && (e.currentTarget.style.backgroundColor = '#3b82f6')}
           >
-            {loading ? '⏳ Creating...' : '✓ Create Company'}
+            {loading || logoUploading ? '⏳ Creating...' : '✓ Create Company'}
           </button>
         </div>
           </form>
