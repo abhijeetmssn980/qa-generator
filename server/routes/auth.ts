@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
+import path from 'path';
 import { findUserByEmail, addUser, getCompanyById, updateCompanyLogo } from '../db';
 
 const router = Router();
