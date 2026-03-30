@@ -171,9 +171,10 @@ router.post('/create-user', async (req, res) => {
         role: newUser.role,
       },
     });
-  } catch (err) {
-    console.error('Create user error:', err);
-    return res.status(500).json({ error: 'Internal server error' });
+  } catch (err: any) {
+    console.error('Create user error:', err.message || err);
+    console.error('Stack:', err.stack);
+    return res.status(500).json({ error: err.message || 'Internal server error' });
   }
 });
 
