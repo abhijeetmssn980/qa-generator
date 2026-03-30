@@ -18,7 +18,7 @@ interface User {
   email: string;
   uid: string;
   companyName?: string;
-  companyLogo?: string;
+  companyId?: number;
   companyAddress?: string;
   role?: UserRole;
 }
@@ -154,7 +154,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
           <Logo 
             size="medium" 
             showText={true}
-            companyLogo={user.companyLogo}
+            companyId={user.companyId}
             companyName={user.companyName}
           />
         </div>
@@ -244,7 +244,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
           {user.companyName ? (
             <>
               <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>
-                {user.companyLogo && <img src={user.companyLogo} alt={user.companyName} style={{ maxHeight: '30px', marginRight: '8px' }} />}
                 {user.companyName}
               </div>
               {user.companyAddress && (

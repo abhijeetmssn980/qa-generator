@@ -5,7 +5,8 @@ import {
   getCompanyById, 
   updateCompany, 
   deleteCompany,
-  getCompanyByName 
+  getCompanyByName,
+  getCompanyLogo,
 } from '../db';
 import { authenticateToken, requireRole } from '../middleware';
 
@@ -33,6 +34,33 @@ router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching company:', error);
     res.status(500).json({ error: 'Failed to fetch company' });
+  }
+});
+
+// Get company logo image (no auth required - can be accessed by public)
+router.get('/:id/logo', async (req: Request, res: Response) => {
+  try {
+    const logoBuffer = await getCompanyLogo(Number(req.params.id));
+    if (!logoBuffer) {
+      return res.status(404).json({ error: 'Logo not found' });
+    }
+    
+    // Detect content type based on buffer signature
+    let contentType = 'image/png'; // default
+    if (logoBuffer.length > 4) {
+      const header = logoBuffer.subarray(0, 4);
+      if (header[0] === 0xff && header[1] === 0xd8) contentType = 'image/jpeg';
+      else if (header[0] === 0x89 && header[1] === 0x50) contentType = 'image/png';
+      else if (header[0] === 0x52 && header[1] === 0x49) contentType = 'image/webp';
+      else if (header.toString('utf8', 0, 4) === '<svg') contentType = 'image/svg+xml';
+    }
+    
+    res.set('Content-Type', contentType);
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.send(logoBuffer);
+  } catch (error) {
+    console.error('Error fetching company logo:', error);
+    res.status(500).json({ error: 'Failed to fetch logo' });
   }
 });
 

@@ -11,7 +11,7 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
   const [password, setPassword] = useState('');
   const [companyId, setCompanyId] = useState<number | string>('');
   const [companyName, setCompanyName] = useState(adminCompanyName || '');
-  const [companyLogo, setCompanyLogo] = useState('');
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
   const [role, setRole] = useState<UserRole>('viewer');
@@ -45,26 +45,15 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
     fetchCompanies();
   }, [adminCompanyName]);
 
-  const handleLogoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Show local preview immediately
+    // Store file and show local preview
+    setLogoFile(file);
     const reader = new FileReader();
     reader.onload = (ev) => setLogoPreview(ev.target?.result as string);
     reader.readAsDataURL(file);
-
-    // Upload to server
-    setLogoUploading(true);
-    try {
-      const { url } = await apiUploadLogo(file);
-      setCompanyLogo(url);
-    } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Logo upload failed' });
-      setLogoPreview(null);
-    } finally {
-      setLogoUploading(false);
-    }
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -99,9 +88,20 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
       if (!useExistingCompany) {
         const newCompany = await apiAddCompany({
           name: companyName,
-          logo: companyLogo || undefined,
         });
         finalCompanyId = newCompany.id;
+
+        // Upload logo if provided
+        if (logoFile && finalCompanyId) {
+          try {
+            setLogoUploading(true);
+            await apiUploadLogo(logoFile, finalCompanyId);
+          } catch (err: any) {
+            console.error('Logo upload error (non-fatal):', err.message);
+          } finally {
+            setLogoUploading(false);
+          }
+        }
       } else {
         finalCompanyId = Number(companyId);
       }
@@ -121,7 +121,7 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
       setRole('viewer');
       setCompanyId('');
       setCompanyName('');
-      setCompanyLogo('');
+      setLogoFile(null);
       setLogoPreview(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err: any) {

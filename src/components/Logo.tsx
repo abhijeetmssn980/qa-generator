@@ -1,13 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface LogoProps {
   size?: 'small' | 'medium' | 'large';
   showText?: boolean;
-  companyLogo?: string;
+  companyId?: number;
   companyName?: string;
 }
 
-const Logo: React.FC<LogoProps> = ({ size = 'medium', showText = true, companyLogo, companyName }) => {
+const Logo: React.FC<LogoProps> = ({ size = 'medium', showText = true, companyId, companyName }) => {
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (companyId) {
+      fetch(`/api/companies/${companyId}/logo`)
+        .then(res => {
+          if (res.ok) {
+            return res.blob();
+          }
+          return null;
+        })
+        .then(blob => {
+          if (blob) {
+            setLogoUrl(URL.createObjectURL(blob));
+          }
+        })
+        .catch(err => console.error('Failed to load logo:', err));
+    }
+  }, [companyId]);
   const sizes = {
     small: { width: 40, height: 40, fontSize: 14 },
     medium: { width: 70, height: 70, fontSize: 24 },
@@ -16,12 +35,12 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', showText = true, companyLo
 
   const s = sizes[size];
 
-  // If user has a company logo, display it
-  if (companyLogo) {
+  // If company has a logo, display it
+  if (logoUrl) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
         <img
-          src={companyLogo}
+          src={logoUrl}
           alt={companyName || 'Company Logo'}
           style={{
             width: `${s.width}px`,

@@ -3,30 +3,14 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-import { findUserByEmail, addUser, getCompanyById } from '../db';
+import { findUserByEmail, addUser, getCompanyById, updateCompanyLogo } from '../db';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'qa-generator-secret-key-2026';
 
-// Logo upload setup
-const __filename_local = fileURLToPath(import.meta.url);
-const __dirname_local = path.dirname(__filename_local);
-const uploadsDir = path.join(__dirname_local, '..', '..', 'uploads', 'logos');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-const logoStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadsDir),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname) || '.png';
-    cb(null, `logo-${uuidv4().slice(0, 8)}${ext}`);
-  },
-});
+// Logo upload setup — Store in memory, will be saved to DB
 const logoUpload = multer({
-  storage: logoStorage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
   fileFilter: (_req, file, cb) => {
     const allowed = ['.png', '.jpg', '.jpeg', '.svg', '.webp'];
@@ -61,13 +45,11 @@ router.post('/login', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    // Fetch company to get current logo and address from company table
-    let companyLogo: string | undefined = undefined;
+    // Fetch company to get address from company table
     let companyAddress: string | undefined = undefined;
     if (user.company_id) {
       const company = await getCompanyById(user.company_id);
       if (company) {
-        companyLogo = company.logo;
         companyAddress = company.address;
       }
     }
@@ -78,7 +60,7 @@ router.post('/login', async (req, res) => {
         uid: user.uid,
         email: user.email,
         companyName: user.companyName,
-        companyLogo,
+        companyId: user.company_id,
         companyAddress,
         role: user.role,
       },
@@ -206,13 +188,11 @@ router.get('/me', async (req, res) => {
       return res.status(401).json({ error: 'User not found' });
     }
 
-    // Fetch company to get current logo and address from company table
-    let companyLogo: string | undefined = undefined;
+    // Fetch company to get address from company table
     let companyAddress: string | undefined = undefined;
     if (user.company_id) {
       const company = await getCompanyById(user.company_id);
       if (company) {
-        companyLogo = company.logo;
         companyAddress = company.address;
       }
     }
@@ -222,7 +202,7 @@ router.get('/me', async (req, res) => {
         uid: user.uid,
         email: user.email,
         companyName: user.companyName,
-        companyLogo,
+        companyId: user.company_id,
         companyAddress,
         role: user.role,
       },
@@ -232,29 +212,36 @@ router.get('/me', async (req, res) => {
   }
 });
 
-// POST /api/auth/upload-logo — upload a company logo image
+// POST /api/auth/upload-logo — upload and store a company logo image in database
 router.post('/upload-logo', logoUpload.single('logo'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
-    // Construct the correct URL based on the request origin
-    const isProduction = process.env.NODE_ENV === 'production' || req.headers['x-forwarded-proto'] === 'https';
-    const protocol = isProduction ? 'https' : 'http';
-    
-    // Use forwarded host if available (from reverse proxy), otherwise use configured domain or hostname
-    let host = req.headers['x-forwarded-host'] as string;
-    if (!host) {
-      // If not forwarded, check if production environment variable is set
-      if (process.env.RAILWAY_PUBLIC_DOMAIN) {
-        host = process.env.RAILWAY_PUBLIC_DOMAIN;
-      } else {
-        host = req.get('host') || `localhost:${process.env.PORT || 3001}`;
-      }
+
+    // Extract company ID from request body
+    const { companyId } = req.body;
+    if (!companyId) {
+      return res.status(400).json({ error: 'Company ID is required' });
     }
-    
-    const logoUrl = `${protocol}://${host}/uploads/logos/${req.file.filename}`;
-    return res.json({ url: logoUrl });
+
+    // Verify company exists
+    const company = await getCompanyById(Number(companyId));
+    if (!company) {
+      return res.status(404).json({ error: 'Company not found' });
+    }
+
+    // Store the image buffer in the database
+    const success = await updateCompanyLogo(Number(companyId), req.file.buffer);
+    if (!success) {
+      return res.status(500).json({ error: 'Failed to save logo to database' });
+    }
+
+    return res.json({ 
+      message: 'Logo uploaded successfully',
+      companyId: company.id,
+      companyName: company.name,
+    });
   } catch (err: any) {
     console.error('Logo upload error:', err);
     return res.status(500).json({ error: err.message || 'Failed to upload logo' });

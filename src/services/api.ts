@@ -112,10 +112,11 @@ export async function apiCreateUser(
   });
 }
 
-export async function apiUploadLogo(file: File): Promise<{ url: string }> {
+export async function apiUploadLogo(file: File, companyId: number): Promise<{ message: string; companyId: number }> {
   const token = localStorage.getItem('token');
   const formData = new FormData();
   formData.append('logo', file);
+  formData.append('companyId', String(companyId));
 
   const res = await fetch(`${API_BASE}/auth/upload-logo`, {
     method: 'POST',
