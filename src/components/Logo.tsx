@@ -3,9 +3,11 @@ import React from 'react';
 interface LogoProps {
   size?: 'small' | 'medium' | 'large';
   showText?: boolean;
+  companyLogo?: string;
+  companyName?: string;
 }
 
-const Logo: React.FC<LogoProps> = ({ size = 'medium', showText = true }) => {
+const Logo: React.FC<LogoProps> = ({ size = 'medium', showText = true, companyLogo, companyName }) => {
   const sizes = {
     small: { width: 40, height: 40, fontSize: 14 },
     medium: { width: 70, height: 70, fontSize: 24 },
@@ -14,6 +16,44 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', showText = true }) => {
 
   const s = sizes[size];
 
+  // If user has a company logo, display it
+  if (companyLogo) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+        <img
+          src={companyLogo}
+          alt={companyName || 'Company Logo'}
+          style={{
+            width: `${s.width}px`,
+            height: `${s.height}px`,
+            objectFit: 'contain',
+            borderRadius: '8px',
+            border: '1px solid rgba(255,255,255,0.2)',
+            padding: '4px',
+            backgroundColor: 'rgba(255,255,255,0.05)'
+          }}
+        />
+        {showText && companyName && (
+          <div style={{
+            textAlign: 'center',
+            lineHeight: 1,
+            fontWeight: 'bold',
+            fontSize: `${s.fontSize * 0.6}px`,
+            color: 'white',
+            textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            maxWidth: '120px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            {companyName}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Fall back to AP Solutions SVG if no company logo
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
       <svg

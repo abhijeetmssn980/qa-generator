@@ -151,7 +151,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       />
       <aside className={`sidebar${sidebarOpen ? ' open' : ''}`}>
         <div className="logo-section">
-          <Logo size="medium" showText={true} />
+          <Logo 
+            size="medium" 
+            showText={true}
+            companyLogo={user.companyLogo}
+            companyName={user.companyName}
+          />
         </div>
         <nav className="sidebar-nav">
           <a
