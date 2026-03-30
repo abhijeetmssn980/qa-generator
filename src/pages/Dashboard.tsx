@@ -10,7 +10,7 @@ import CreateCompany from './CreateCompany';
 import Trash from './Trash';
 import Logo from '../components/Logo';
 import { apiGetProducts, apiAddProduct, apiUpdateProduct, apiDeleteProduct } from '../services/api';
-import type { Product, Company } from '../services/api';
+import type { Product } from '../services/api';
 import type { UserRole } from '../services/api';
 
 type Page = 'dashboard' | 'add' | 'edit' | 'list' | 'trash' | 'view' | 'users' | 'bulk-upload' | 'create-company';
