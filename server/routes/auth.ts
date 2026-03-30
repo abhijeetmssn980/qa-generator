@@ -61,14 +61,25 @@ router.post('/login', async (req, res) => {
       { expiresIn: '7d' }
     );
 
+    // Fetch company to get current logo and address from company table
+    let companyLogo: string | undefined = undefined;
+    let companyAddress: string | undefined = undefined;
+    if (user.company_id) {
+      const company = await getCompanyById(user.company_id);
+      if (company) {
+        companyLogo = company.logo;
+        companyAddress = company.address;
+      }
+    }
+
     return res.json({
       token,
       user: {
         uid: user.uid,
         email: user.email,
         companyName: user.companyName,
-        companyLogo: user.companyLogo,
-        companyAddress: user.companyAddress,
+        companyLogo,
+        companyAddress,
         role: user.role,
       },
     });
@@ -195,13 +206,24 @@ router.get('/me', async (req, res) => {
       return res.status(401).json({ error: 'User not found' });
     }
 
+    // Fetch company to get current logo and address from company table
+    let companyLogo: string | undefined = undefined;
+    let companyAddress: string | undefined = undefined;
+    if (user.company_id) {
+      const company = await getCompanyById(user.company_id);
+      if (company) {
+        companyLogo = company.logo;
+        companyAddress = company.address;
+      }
+    }
+
     return res.json({
       user: {
         uid: user.uid,
         email: user.email,
         companyName: user.companyName,
-        companyLogo: user.companyLogo,
-        companyAddress: user.companyAddress,
+        companyLogo,
+        companyAddress,
         role: user.role,
       },
     });
