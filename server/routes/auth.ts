@@ -217,8 +217,20 @@ router.post('/upload-logo', logoUpload.single('logo'), async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
     // Construct the correct URL based on the request origin
-    const protocol = process.env.NODE_ENV === 'production' || req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
-    const host = req.get('host') || `localhost:${process.env.PORT || 3001}`;
+    const isProduction = process.env.NODE_ENV === 'production' || req.headers['x-forwarded-proto'] === 'https';
+    const protocol = isProduction ? 'https' : 'http';
+    
+    // Use forwarded host if available (from reverse proxy), otherwise use configured domain or hostname
+    let host = req.headers['x-forwarded-host'] as string;
+    if (!host) {
+      // If not forwarded, check if production environment variable is set
+      if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+        host = process.env.RAILWAY_PUBLIC_DOMAIN;
+      } else {
+        host = req.get('host') || `localhost:${process.env.PORT || 3001}`;
+      }
+    }
+    
     const logoUrl = `${protocol}://${host}/uploads/logos/${req.file.filename}`;
     return res.json({ url: logoUrl });
   } catch (err: any) {
