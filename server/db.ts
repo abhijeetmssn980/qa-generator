@@ -191,7 +191,7 @@ export async function permanentDeleteProduct(uniqueId: string): Promise<boolean>
 export async function addCompany(company: Company): Promise<Company> {
   const { rows } = await pool.query(
     `INSERT INTO companies (name, logo, address, phone, email, website)
-     VALUES ($1, $2, $3, $4, $5, $6)
+     VALUES ($1, $2::bytea, $3, $4, $5, $6)
      RETURNING id, name, logo, address, phone, email, website, created_at`,
     [company.name, company.logo || null, company.address || null, company.phone || null, company.email || null, company.website || null]
   );
@@ -268,8 +268,11 @@ export async function updateCompany(id: number, updates: Partial<Company>): Prom
 
   for (const [key, col] of Object.entries(columnMap)) {
     if (key in updates) {
-      fields.push(`${col} = $${i++}`);
+      // Add explicit bytea cast for logo column
+      const castSuffix = key === 'logo' ? '::bytea' : '';
+      fields.push(`${col} = $${i}${castSuffix}`);
       values.push((updates as any)[key]);
+      i++;
     }
   }
 
@@ -298,7 +301,11 @@ export async function updateCompany(id: number, updates: Partial<Company>): Prom
 export async function updateCompanyLogo(id: number, logoBuffer: Buffer): Promise<boolean> {
   try {
     console.log('[DB] updateCompanyLogo - ID:', id, 'Buffer size:', logoBuffer.length);
-    const result = await pool.query('UPDATE companies SET logo = $1 WHERE id = $2', [logoBuffer, id]);
+    // Explicitly cast to bytea to ensure proper binary handling
+    const result = await pool.query(
+      'UPDATE companies SET logo = $1::bytea WHERE id = $2',
+      [logoBuffer, id]
+    );
     console.log('[DB] updateCompanyLogo - Rows affected:', result.rowCount);
     return (result.rowCount ?? 0) > 0;
   } catch (err) {
