@@ -12,7 +12,8 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', showText = true, companyId
 
   useEffect(() => {
     if (companyId) {
-      fetch(`/api/companies/${companyId}/logo`)
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      fetch(`${API_BASE}/companies/${companyId}/logo`)
         .then(res => {
           if (res.ok) {
             return res.blob();
