@@ -295,14 +295,27 @@ export async function updateCompany(id: number, updates: Partial<Company>): Prom
 }
 
 export async function updateCompanyLogo(id: number, logoBuffer: Buffer): Promise<boolean> {
-  const result = await pool.query('UPDATE companies SET logo = $1 WHERE id = $2', [logoBuffer, id]);
-  return (result.rowCount ?? 0) > 0;
+  try {
+    console.log('[DB] updateCompanyLogo - ID:', id, 'Buffer size:', logoBuffer.length);
+    const result = await pool.query('UPDATE companies SET logo = $1 WHERE id = $2', [logoBuffer, id]);
+    console.log('[DB] updateCompanyLogo - Rows affected:', result.rowCount);
+    return (result.rowCount ?? 0) > 0;
+  } catch (err) {
+    console.error('[DB] updateCompanyLogo error:', err);
+    throw err;
+  }
 }
 
 export async function getCompanyLogo(id: number): Promise<Buffer | null> {
-  const { rows } = await pool.query('SELECT logo FROM companies WHERE id = $1', [id]);
-  if (rows.length === 0 || !rows[0].logo) return null;
-  return rows[0].logo;
+  try {
+    const { rows } = await pool.query('SELECT logo FROM companies WHERE id = $1', [id]);
+    console.log('[DB] getCompanyLogo - ID:', id, 'Has data:', !!rows[0]?.logo);
+    if (rows.length === 0 || !rows[0].logo) return null;
+    return rows[0].logo;
+  } catch (err) {
+    console.error('[DB] getCompanyLogo error:', err);
+    throw err;
+  }
 }
 
 export async function deleteCompany(id: number): Promise<boolean> {

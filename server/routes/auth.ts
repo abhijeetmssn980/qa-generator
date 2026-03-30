@@ -216,35 +216,50 @@ router.get('/me', async (req, res) => {
 // POST /api/auth/upload-logo — upload and store a company logo image in database
 router.post('/upload-logo', logoUpload.single('logo'), async (req, res) => {
   try {
+    console.log('[UPLOAD-LOGO] File received:', req.file ? `${req.file.originalname} (${req.file.size} bytes)` : 'NO FILE');
+    console.log('[UPLOAD-LOGO] Body:', req.body);
+
     if (!req.file) {
+      console.error('[UPLOAD-LOGO] Error: No file uploaded');
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Extract company ID from request body
-    const { companyId } = req.body;
+    // Extract company ID from request body or query
+    const companyId = req.body.companyId || req.query.companyId;
+    console.log('[UPLOAD-LOGO] Company ID:', companyId);
+
     if (!companyId) {
+      console.error('[UPLOAD-LOGO] Error: Company ID is required');
       return res.status(400).json({ error: 'Company ID is required' });
     }
 
     // Verify company exists
     const company = await getCompanyById(Number(companyId));
+    console.log('[UPLOAD-LOGO] Company exists:', !!company);
+
     if (!company) {
+      console.error('[UPLOAD-LOGO] Error: Company not found');
       return res.status(404).json({ error: 'Company not found' });
     }
 
     // Store the image buffer in the database
+    console.log('[UPLOAD-LOGO] Storing logo buffer... size:', req.file.buffer.length);
     const success = await updateCompanyLogo(Number(companyId), req.file.buffer);
+    console.log('[UPLOAD-LOGO] Update success:', success);
+
     if (!success) {
+      console.error('[UPLOAD-LOGO] Error: Failed to save logo to database');
       return res.status(500).json({ error: 'Failed to save logo to database' });
     }
 
+    console.log('[UPLOAD-LOGO] Success! Logo uploaded for company:', company.name);
     return res.json({ 
       message: 'Logo uploaded successfully',
       companyId: company.id,
       companyName: company.name,
     });
   } catch (err: any) {
-    console.error('Logo upload error:', err);
+    console.error('[UPLOAD-LOGO] Error:', err);
     return res.status(500).json({ error: err.message || 'Failed to upload logo' });
   }
 });
