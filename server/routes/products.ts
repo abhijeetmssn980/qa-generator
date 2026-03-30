@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import * as XLSX from 'xlsx';
 import {
@@ -14,56 +13,16 @@ import {
   permanentDeleteProduct,
   findUserByEmail,
 } from '../db';
+import { authenticateToken, requireRole } from '../middleware';
 import type { Request, Response, NextFunction } from 'express';
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'qa-generator-secret-key-2026';
 
 // Multer: store uploaded file in memory
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
-// Auth middleware — sets req.user with uid, email, role
-function authenticate(req: Request, res: Response, next: NextFunction) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Authentication required' });
-  }
-  try {
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, JWT_SECRET) as { uid: string; email: string };
-    (req as any).user = decoded;
-    return next();
-  } catch {
-    return res.status(401).json({ error: 'Invalid or expired token' });
-  }
-}
-
-// Role-check helper: loads full user from DB to get role, then checks against allowed roles
-function requireRole(...allowedRoles: string[]) {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const decoded = (req as any).user;
-      if (!decoded?.email) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
-      const user = await findUserByEmail(decoded.email);
-      if (!user) {
-        return res.status(401).json({ error: 'User not found' });
-      }
-      const role = user.role || 'viewer';
-      if (!allowedRoles.includes(role)) {
-        return res.status(403).json({ error: 'You do not have permission to perform this action' });
-      }
-      (req as any).userRole = role;
-      return next();
-    } catch (err) {
-      return res.status(500).json({ error: 'Permission check failed' });
-    }
-  };
-}
-
 // GET /api/products — list products filtered by user's company
-router.get('/', authenticate, async (_req, res) => {
+router.get('/', authenticateToken, async (_req, res) => {
   try {
     const decoded = (_req as any).user;
     const user = decoded?.email ? await findUserByEmail(decoded.email) : null;
@@ -77,7 +36,7 @@ router.get('/', authenticate, async (_req, res) => {
 });
 
 // GET /api/products/trash/list — get soft-deleted products filtered by company (MUST come before /:uniqueId)
-router.get('/trash/list', authenticate, async (_req, res) => {
+router.get('/trash/list', authenticateToken, async (_req, res) => {
   try {
     const decoded = (_req as any).user;
     const user = decoded?.email ? await findUserByEmail(decoded.email) : null;
@@ -105,7 +64,7 @@ router.get('/:uniqueId', async (_req, res) => {
 });
 
 // POST /api/products — add a new product (admin or editor only)
-router.post('/', authenticate, requireRole('admin', 'editor'), async (req, res) => {
+router.post('/', authenticateToken, requireRole('admin', 'editor'), async (req, res) => {
   try {
     const body = req.body;
     const user = (req as any).user;
@@ -137,7 +96,7 @@ router.post('/', authenticate, requireRole('admin', 'editor'), async (req, res) 
 });
 
 // PUT /api/products/:uniqueId — update a product (admin or editor only)
-router.put('/:uniqueId', authenticate, requireRole('admin', 'editor'), async (req, res) => {
+router.put('/:uniqueId', authenticateToken, requireRole('admin', 'editor'), async (req, res) => {
   try {
     const updated = await updateProduct(req.params.uniqueId as string, req.body);
     if (!updated) {
@@ -151,7 +110,7 @@ router.put('/:uniqueId', authenticate, requireRole('admin', 'editor'), async (re
 });
 
 // DELETE /api/products/:uniqueId — soft delete a product (set active='N')
-router.delete('/:uniqueId', authenticate, requireRole('admin', 'editor'), async (req, res) => {
+router.delete('/:uniqueId', authenticateToken, requireRole('admin', 'editor'), async (req, res) => {
   try {
     const deleted = await deleteProduct(req.params.uniqueId as string);
     if (!deleted) {
@@ -165,7 +124,7 @@ router.delete('/:uniqueId', authenticate, requireRole('admin', 'editor'), async 
 });
 
 // POST /api/products/:uniqueId/restore — restore a soft-deleted product
-router.post('/:uniqueId/restore', authenticate, requireRole('admin', 'editor'), async (req, res) => {
+router.post('/:uniqueId/restore', authenticateToken, requireRole('admin', 'editor'), async (req, res) => {
   try {
     const restored = await restoreProduct(req.params.uniqueId as string);
     if (!restored) {
@@ -179,7 +138,7 @@ router.post('/:uniqueId/restore', authenticate, requireRole('admin', 'editor'), 
 });
 
 // DELETE /api/products/:uniqueId/permanent — permanently delete
-router.delete('/:uniqueId/permanent', authenticate, requireRole('admin'), async (req, res) => {
+router.delete('/:uniqueId/permanent', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
     const deleted = await permanentDeleteProduct(req.params.uniqueId as string);
     if (!deleted) {
@@ -193,7 +152,7 @@ router.delete('/:uniqueId/permanent', authenticate, requireRole('admin'), async 
 });
 
 // GET /api/products/search?q=query — search products
-router.get('/search', authenticate, async (req, res) => {
+router.get('/search', authenticateToken, async (req, res) => {
   try {
     const query = (req.query.q as string || '').toLowerCase();
     const allProducts = await getProducts();
@@ -211,7 +170,7 @@ router.get('/search', authenticate, async (req, res) => {
 });
 
 // POST /api/products/bulk-upload — bulk import from Excel (admin only)
-router.post('/bulk-upload', authenticate, requireRole('admin'), upload.single('file'), async (req: Request, res: Response) => {
+router.post('/bulk-upload', authenticateToken, requireRole('admin'), upload.single('file'), async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
 

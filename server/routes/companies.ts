@@ -7,7 +7,7 @@ import {
   deleteCompany,
   getCompanyByName 
 } from '../db';
-import { authenticateToken } from '../middleware';
+import { authenticateToken, requireRole } from '../middleware';
 
 const router = Router();
 
@@ -37,15 +37,8 @@ router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
 });
 
 // Create new company (admin only)
-router.post('/', authenticateToken, async (req: Request, res: Response) => {
+router.post('/', authenticateToken, requireRole('admin'), async (req: Request, res: Response) => {
   try {
-    const user = (req as any).user;
-    
-    // Only admins can create companies
-    if (user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only admins can create companies' });
-    }
-
     const { name, logo, address, phone, email, website } = req.body;
 
     if (!name) {
@@ -75,15 +68,8 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
 });
 
 // Update company (admin only)
-router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.put('/:id', authenticateToken, requireRole('admin'), async (req: Request, res: Response) => {
   try {
-    const user = (req as any).user;
-    
-    // Only admins can update companies
-    if (user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only admins can update companies' });
-    }
-
     const company = await updateCompany(Number(req.params.id), req.body);
     
     if (!company) {
@@ -98,15 +84,8 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
 });
 
 // Delete company (admin only)
-router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.delete('/:id', authenticateToken, requireRole('admin'), async (req: Request, res: Response) => {
   try {
-    const user = (req as any).user;
-    
-    // Only admins can delete companies
-    if (user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only admins can delete companies' });
-    }
-
     const success = await deleteCompany(Number(req.params.id));
     
     if (!success) {
