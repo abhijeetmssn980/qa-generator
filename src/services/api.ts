@@ -36,11 +36,22 @@ async function request<T>(
 // ── Auth ──
 export type UserRole = 'admin' | 'editor' | 'viewer';
 
+export interface Company {
+  id?: number;
+  name: string;
+  logo?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+}
+
 export interface AuthResponse {
   token: string;
   user: {
     uid: string;
     email: string;
+    companyId?: number;
     companyName?: string;
     companyLogo?: string;
     companyAddress?: string;
@@ -73,6 +84,7 @@ export async function apiGetMe(): Promise<{
   user: {
     uid: string;
     email: string;
+    companyId?: number;
     companyName?: string;
     companyLogo?: string;
     companyAddress?: string;
@@ -213,4 +225,31 @@ export async function apiBulkUploadProducts(file: File): Promise<BulkUploadResul
     throw new Error(data.error || `Upload failed (${res.status})`);
   }
   return data as BulkUploadResult;
+}
+
+// ── Companies ──
+export async function apiAddCompany(company: Company): Promise<Company> {
+  return request('/companies', {
+    method: 'POST',
+    body: JSON.stringify(company),
+  });
+}
+
+export async function apiGetAllCompanies(): Promise<Company[]> {
+  return request('/companies');
+}
+
+export async function apiGetCompanyById(id: number): Promise<Company> {
+  return request(`/companies/${id}`);
+}
+
+export async function apiUpdateCompany(id: number, updates: Partial<Company>): Promise<Company> {
+  return request(`/companies/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+  });
+}
+
+export async function apiDeleteCompany(id: number): Promise<void> {
+  await request(`/companies/${id}`, { method: 'DELETE' });
 }

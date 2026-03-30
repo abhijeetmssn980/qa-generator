@@ -8,6 +8,7 @@ import cors from 'cors';
 import pool from './pool';
 import authRoutes from './routes/auth';
 import productRoutes from './routes/products';
+import companiesRoutes from './routes/companies';
 
 const __filename_local = fileURLToPath(import.meta.url);
 const __dirname_local = path.dirname(__filename_local);
@@ -41,6 +42,7 @@ app.use('/uploads', express.static(path.join(__dirname_local, '..', 'uploads')))
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/companies', companiesRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
@@ -53,12 +55,27 @@ async function initDB() {
   try {
     await client.query('BEGIN');
 
+    // Create companies table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS companies (
+        id                SERIAL PRIMARY KEY,
+        name              VARCHAR(255) UNIQUE NOT NULL,
+        logo              VARCHAR(500),
+        address           TEXT,
+        phone             VARCHAR(20),
+        email             VARCHAR(255),
+        website           VARCHAR(255),
+        created_at        TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
     // Create users table
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         uid               VARCHAR(100) PRIMARY KEY,
         email             VARCHAR(255) UNIQUE NOT NULL,
         password          VARCHAR(255) NOT NULL,
+        company_id        INTEGER REFERENCES companies(id),
         company_name      VARCHAR(255),
         company_logo      VARCHAR(500),
         company_address   TEXT,

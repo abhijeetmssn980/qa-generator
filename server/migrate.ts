@@ -6,12 +6,27 @@ async function migrate() {
   try {
     await client.query('BEGIN');
 
+    // Companies table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS companies (
+        id                SERIAL PRIMARY KEY,
+        name              VARCHAR(255) UNIQUE NOT NULL,
+        logo              VARCHAR(500),
+        address           TEXT,
+        phone             VARCHAR(20),
+        email             VARCHAR(255),
+        website           VARCHAR(255),
+        created_at        TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
     // Users table
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         uid               VARCHAR(100) PRIMARY KEY,
         email             VARCHAR(255) UNIQUE NOT NULL,
         password          VARCHAR(255) NOT NULL,
+        company_id        INTEGER REFERENCES companies(id),
         company_name      VARCHAR(255),
         company_logo      VARCHAR(500),
         company_address   TEXT,
