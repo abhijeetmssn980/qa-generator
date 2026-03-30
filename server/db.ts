@@ -5,7 +5,7 @@ import pool from './pool';
 export interface Company {
   id?: number;
   name: string;
-  logo?: string;
+  logo?: Buffer | string;  // Binary image data or base64 string
   address?: string;
   phone?: string;
   email?: string;

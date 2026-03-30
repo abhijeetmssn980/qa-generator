@@ -60,7 +60,7 @@ async function initDB() {
       CREATE TABLE IF NOT EXISTS companies (
         id                SERIAL PRIMARY KEY,
         name              VARCHAR(255) UNIQUE NOT NULL,
-        logo              VARCHAR(500),
+        logo              BYTEA,
         address           TEXT,
         phone             VARCHAR(20),
         email             VARCHAR(255),
@@ -98,6 +98,20 @@ async function initDB() {
     } catch (migrationErr: any) {
       if (!migrationErr.message.includes('already exists')) {
         console.error('Migration warning:', migrationErr.message);
+      }
+    }
+
+    // Migrate logo column to BYTEA for binary data storage
+    try {
+      await client.query(
+        `ALTER TABLE companies 
+         ALTER COLUMN logo TYPE BYTEA`
+      );
+      console.log('✅ Logo column migrated to BYTEA');
+    } catch (migrationErr: any) {
+      // Column might already be BYTEA, ignore this error
+      if (!migrationErr.message.includes('already') && !migrationErr.message.includes('same')) {
+        console.warn('Logo column migration info:', migrationErr.message);
       }
     }
 

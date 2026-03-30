@@ -219,6 +219,29 @@ router.post('/upload-logo', logoUpload.single('logo'), async (req, res) => {
     console.log('[UPLOAD-LOGO] File received:', req.file ? `${req.file.originalname} (${req.file.size} bytes)` : 'NO FILE');
     console.log('[UPLOAD-LOGO] Body:', req.body);
 
+    // Verify JWT token
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.error('[UPLOAD-LOGO] Error: No authorization token provided');
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET) as { uid: string; email: string };
+    } catch {
+      console.error('[UPLOAD-LOGO] Error: Invalid or expired token');
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+
+    // Verify user exists and get their company
+    const user = await findUserByEmail(decoded.email);
+    if (!user) {
+      console.error('[UPLOAD-LOGO] Error: User not found');
+      return res.status(401).json({ error: 'User not found' });
+    }
+
     if (!req.file) {
       console.error('[UPLOAD-LOGO] Error: No file uploaded');
       return res.status(400).json({ error: 'No file uploaded' });
@@ -233,8 +256,15 @@ router.post('/upload-logo', logoUpload.single('logo'), async (req, res) => {
       return res.status(400).json({ error: 'Company ID is required' });
     }
 
+    // Authorization check: user can only upload for their own company or if they're an admin
+    const targetCompanyId = Number(companyId);
+    if (user.company_id !== targetCompanyId && user.role !== 'admin') {
+      console.error('[UPLOAD-LOGO] Error: User not authorized for this company');
+      return res.status(403).json({ error: 'You do not have permission to upload a logo for this company' });
+    }
+
     // Verify company exists
-    const company = await getCompanyById(Number(companyId));
+    const company = await getCompanyById(targetCompanyId);
     console.log('[UPLOAD-LOGO] Company exists:', !!company);
 
     if (!company) {
@@ -244,7 +274,7 @@ router.post('/upload-logo', logoUpload.single('logo'), async (req, res) => {
 
     // Store the image buffer in the database
     console.log('[UPLOAD-LOGO] Storing logo buffer... size:', req.file.buffer.length);
-    const success = await updateCompanyLogo(Number(companyId), req.file.buffer);
+    const success = await updateCompanyLogo(targetCompanyId, req.file.buffer);
     console.log('[UPLOAD-LOGO] Update success:', success);
 
     if (!success) {
