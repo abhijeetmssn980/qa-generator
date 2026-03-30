@@ -140,6 +140,8 @@ router.post('/create-user', async (req, res) => {
       createdAt: new Date().toISOString(),
       companyId: companyId || undefined,
       companyName: companyName || 'My Company',
+      companyLogo: undefined,
+      companyAddress: undefined,
       role: assignedRole as 'admin' | 'editor' | 'viewer',
     };
 

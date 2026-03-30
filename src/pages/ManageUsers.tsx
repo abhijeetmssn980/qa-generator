@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { apiCreateUser, apiGetAllCompanies } from '../services/api';
+import React, { useState, useEffect, useRef } from 'react';
+import { apiCreateUser, apiGetAllCompanies, apiAddCompany, apiUploadLogo } from '../services/api';
 import type { UserRole, Company } from '../services/api';
 
 interface ManageUsersProps {
@@ -11,12 +11,16 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
   const [password, setPassword] = useState('');
   const [companyId, setCompanyId] = useState<number | string>('');
   const [companyName, setCompanyName] = useState(adminCompanyName || '');
+  const [companyLogo, setCompanyLogo] = useState('');
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
   const [role, setRole] = useState<UserRole>('viewer');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companiesLoading, setCompaniesLoading] = useState(false);
   const [useExistingCompany, setUseExistingCompany] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch companies on mount
   useEffect(() => {
@@ -40,6 +44,28 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
     };
     fetchCompanies();
   }, [adminCompanyName]);
+
+  const handleLogoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Show local preview immediately
+    const reader = new FileReader();
+    reader.onload = (ev) => setLogoPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+
+    // Upload to server
+    setLogoUploading(true);
+    try {
+      const { url } = await apiUploadLogo(file);
+      setCompanyLogo(url);
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message || 'Logo upload failed' });
+      setLogoPreview(null);
+    } finally {
+      setLogoUploading(false);
+    }
+  };
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,11 +93,25 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
 
     setLoading(true);
     try {
+      let finalCompanyId: number | undefined = undefined;
+
+      // If creating new company, create it first
+      if (!useExistingCompany) {
+        const newCompany = await apiAddCompany({
+          name: companyName,
+          logo: companyLogo || undefined,
+        });
+        finalCompanyId = newCompany.id;
+      } else {
+        finalCompanyId = Number(companyId);
+      }
+
+      // Create user linked to company
       const result = await apiCreateUser(
         email,
         password,
-        useExistingCompany ? Number(companyId) : undefined,
-        !useExistingCompany ? companyName : undefined,
+        finalCompanyId,
+        undefined,
         role
       );
       setMessage({ type: 'success', text: `User "${result.user.email}" created as ${role}!` });
@@ -81,6 +121,9 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
       setRole('viewer');
       setCompanyId('');
       setCompanyName('');
+      setCompanyLogo('');
+      setLogoPreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Failed to create user.' });
     } finally {
@@ -235,26 +278,51 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
               </div>
             ) : (
               <div>
-                <input
-                  type="text"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="New Company Name"
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                  }}
-                />
+                <div style={{ marginBottom: '12px' }}>
+                  <input
+                    type="text"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    placeholder="New Company Name"
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                    onChange={handleLogoSelect}
+                    style={{ flex: 1, fontSize: '13px' }}
+                  />
+                  {logoUploading && <span style={{ fontSize: '13px', color: '#6366f1' }}>⏳ Uploading...</span>}
+                  {logoPreview && !logoUploading && (
+                    <img
+                      src={logoPreview}
+                      alt="Logo preview"
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        objectFit: 'contain',
+                        borderRadius: '6px',
+                        border: '1px solid #e2e8f0',
+                      }}
+                    />
+                  )}
+                </div>
               </div>
             )}
           </div>
         </div>
 
         <div style={{ marginTop: '24px' }}>
-          <button type="submit" className="primary-btn" disabled={loading}>
+          <button type="submit" className="primary-btn" disabled={loading || logoUploading}>
             {loading ? '⏳ Creating...' : '➕ Create User'}
           </button>
         </div>
