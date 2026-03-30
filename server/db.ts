@@ -44,7 +44,6 @@ export interface User {
   createdAt: string;
   companyId?: number;
   companyName?: string;
-  companyLogo?: string;
   companyAddress?: string;
   role?: UserRole;
 }
@@ -346,7 +345,6 @@ export async function findUserByEmail(email: string): Promise<User | undefined> 
     createdAt: rows[0].created_at,
     companyId: rows[0].company_id,
     companyName: rows[0].company_name,
-    companyLogo: rows[0].company_logo,
     companyAddress: rows[0].company_address,
     role: rows[0].role || 'user',
   };
@@ -354,8 +352,8 @@ export async function findUserByEmail(email: string): Promise<User | undefined> 
 
 export async function addUser(user: User): Promise<User> {
   await pool.query(
-    'INSERT INTO users (uid, email, password, company_id, company_name, company_logo, company_address, role) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-    [user.uid, user.email, user.password, user.companyId || null, user.companyName || null, user.companyLogo || null, user.companyAddress || null, user.role || 'user']
+    'INSERT INTO users (uid, email, password, company_id, company_name, company_address, role) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+    [user.uid, user.email, user.password, user.companyId || null, user.companyName || null, user.companyAddress || null, user.role || 'user']
   );
   return user;
 }
