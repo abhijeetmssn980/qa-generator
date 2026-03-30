@@ -149,22 +149,45 @@ async function initDB() {
   // Seed demo data if tables are empty
   try {
     const { default: bcrypt } = await import('bcryptjs');
+    
+    // First, ensure companies exist
+    const { rows: companyRows } = await pool.query('SELECT id, name FROM companies');
+    let apDemoId = companyRows.find(r => r.name === 'AP Demo Company')?.id;
+    let pharmaId = companyRows.find(r => r.name === 'Pharma Solutions Ltd')?.id;
+    
+    if (!apDemoId) {
+      const result = await pool.query(
+        'INSERT INTO companies (name, address) VALUES ($1, $2) RETURNING id',
+        ['AP Demo Company', '123 Demo Street, New Delhi, India']
+      );
+      apDemoId = result.rows[0].id;
+    }
+    
+    if (!pharmaId) {
+      const result = await pool.query(
+        'INSERT INTO companies (name, address) VALUES ($1, $2) RETURNING id',
+        ['Pharma Solutions Ltd', '456 Pharma Road, Mumbai, India']
+      );
+      pharmaId = result.rows[0].id;
+    }
+    
+    // Then seed users with company_id
     const { rows: userRows } = await pool.query('SELECT COUNT(*) FROM users');
     if (parseInt(userRows[0].count) === 0) {
       const demoUsers = [
-        { uid: 'demo-admin-001', email: 'admin@demo.com', password: 'admin123456', companyName: 'AP Demo Company', companyAddress: '123 Demo Street, New Delhi, India', role: 'admin' },
-        { uid: 'demo-editor-001', email: 'editor@demo.com', password: 'editor123456', companyName: 'AP Demo Company', companyAddress: '123 Demo Street, New Delhi, India', role: 'editor' },
-        { uid: 'demo-viewer-001', email: 'viewer@demo.com', password: 'viewer123456', companyName: 'AP Demo Company', companyAddress: '123 Demo Street, New Delhi, India', role: 'viewer' },
-        { uid: 'demo-admin-002', email: 'admin@pharma.com', password: 'admin123456', companyName: 'Pharma Solutions Ltd', companyAddress: '456 Pharma Road, Mumbai, India', role: 'admin' },
+        { uid: 'demo-admin-001', email: 'admin@demo.com', password: 'admin123456', companyId: apDemoId, companyAddress: '123 Demo Street, New Delhi, India', role: 'admin' },
+        { uid: 'demo-editor-001', email: 'editor@demo.com', password: 'editor123456', companyId: apDemoId, companyAddress: '123 Demo Street, New Delhi, India', role: 'editor' },
+        { uid: 'demo-viewer-001', email: 'viewer@demo.com', password: 'viewer123456', companyId: apDemoId, companyAddress: '123 Demo Street, New Delhi, India', role: 'viewer' },
+        { uid: 'demo-admin-002', email: 'admin@pharma.com', password: 'admin123456', companyId: pharmaId, companyAddress: '456 Pharma Road, Mumbai, India', role: 'admin' },
       ];
       for (const u of demoUsers) {
         const hashed = await bcrypt.hash(u.password, 10);
         await pool.query(
-          'INSERT INTO users (uid, email, password, company_name, company_address, role) VALUES ($1,$2,$3,$4,$5,$6)',
-          [u.uid, u.email, hashed, u.companyName, u.companyAddress, u.role]
+          'INSERT INTO users (uid, email, password, company_id, company_address, role) VALUES ($1,$2,$3,$4,$5,$6)',
+          [u.uid, u.email, hashed, u.companyId, u.companyAddress, u.role]
         );
       }
-      console.log('✅ Demo users seeded');
+      console.log('✅ Demo users seeded with company_id');
     }
 
     const { rows: prodRows } = await pool.query('SELECT COUNT(*) FROM products');

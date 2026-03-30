@@ -46,12 +46,14 @@ router.post('/login', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    // Fetch company to get address from company table
+    // Fetch company to get address and logo from company table
     let companyAddress: string | undefined = undefined;
+    let companyLogo: string | undefined = undefined;
     if (user.company_id) {
       const company = await getCompanyById(user.company_id);
       if (company) {
         companyAddress = company.address;
+        companyLogo = company.logo;
       }
     }
 
@@ -63,6 +65,7 @@ router.post('/login', async (req, res) => {
         companyName: user.companyName,
         companyId: user.company_id,
         companyAddress,
+        companyLogo,
         role: user.role,
       },
     });
@@ -189,12 +192,14 @@ router.get('/me', async (req, res) => {
       return res.status(401).json({ error: 'User not found' });
     }
 
-    // Fetch company to get address from company table
+    // Fetch company to get address and logo from company table
     let companyAddress: string | undefined = undefined;
+    let companyLogo: string | undefined = undefined;
     if (user.company_id) {
       const company = await getCompanyById(user.company_id);
       if (company) {
         companyAddress = company.address;
+        companyLogo = company.logo;
       }
     }
 
@@ -205,6 +210,7 @@ router.get('/me', async (req, res) => {
         companyName: user.companyName,
         companyId: user.company_id,
         companyAddress,
+        companyLogo,
         role: user.role,
       },
     });
