@@ -30,8 +30,8 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', showText = true, companyId
   }, [companyId]);
   const sizes = {
     small: { width: 40, height: 40, fontSize: 14 },
-    medium: { width: 70, height: 70, fontSize: 24 },
-    large: { width: 100, height: 100, fontSize: 32 }
+    medium: { width: 120, height: 120, fontSize: 24 },
+    large: { width: 150, height: 150, fontSize: 32 }
   };
 
   const s = sizes[size];
@@ -39,32 +39,42 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', showText = true, companyId
   // If company has a logo, display it
   if (logoUrl) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-        <img
-          src={logoUrl}
-          alt={companyName || 'Company Logo'}
-          style={{
-            width: `${s.width}px`,
-            height: `${s.height}px`,
-            objectFit: 'contain',
-            borderRadius: '8px',
-            border: '1px solid rgba(255,255,255,0.2)',
-            padding: '4px',
-            backgroundColor: 'rgba(255,255,255,0.05)'
-          }}
-        />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', justifyContent: 'center' }}>
+        <div style={{
+          width: `${s.width}px`,
+          height: `${s.width}px`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: '12px',
+          border: '2px solid rgba(255,255,255,0.3)',
+          backgroundColor: 'rgba(255,255,255,0.1)',
+          padding: '8px',
+          overflow: 'hidden'
+        }}>
+          <img
+            src={logoUrl}
+            alt={companyName || 'Company Logo'}
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%',
+              width: 'auto',
+              height: 'auto',
+              objectFit: 'contain'
+            }}
+          />
+        </div>
         {showText && companyName && (
           <div style={{
             textAlign: 'center',
-            lineHeight: 1,
+            lineHeight: 1.2,
             fontWeight: 'bold',
-            fontSize: `${s.fontSize * 0.6}px`,
+            fontSize: `${s.fontSize * 0.7}px`,
             color: 'white',
-            textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-            maxWidth: '120px',
+            textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+            maxWidth: '140px',
             overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
+            textOverflow: 'ellipsis'
           }}>
             {companyName}
           </div>
