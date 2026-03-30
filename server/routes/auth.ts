@@ -135,14 +135,18 @@ router.post('/create-user', async (req, res) => {
     // If companyId provided, validate company exists
     let finalCompanyId = companyId || undefined;
     let finalCompanyName = companyName || 'My Company';
+    let finalCompanyLogo: string | undefined = undefined;
+    let finalCompanyAddress: string | undefined = undefined;
     
     if (finalCompanyId) {
       const company = await getCompanyById(finalCompanyId);
       if (!company) {
         return res.status(400).json({ error: `Company with ID ${finalCompanyId} does not exist` });
       }
-      // Use company's actual name from database
+      // Use company's actual data from database
       finalCompanyName = company.name;
+      finalCompanyLogo = company.logo;
+      finalCompanyAddress = company.address;
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -153,8 +157,8 @@ router.post('/create-user', async (req, res) => {
       createdAt: new Date().toISOString(),
       companyId: finalCompanyId,
       companyName: finalCompanyName,
-      companyLogo: undefined,
-      companyAddress: undefined,
+      companyLogo: finalCompanyLogo,
+      companyAddress: finalCompanyAddress,
       role: assignedRole as 'admin' | 'editor' | 'viewer',
     };
 
@@ -212,8 +216,10 @@ router.post('/upload-logo', logoUpload.single('logo'), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
-    // Return the URL that can be used as companyLogo
-    const logoUrl = `http://localhost:${process.env.PORT || 3001}/uploads/logos/${req.file.filename}`;
+    // Construct the correct URL based on the request origin
+    const protocol = process.env.NODE_ENV === 'production' || req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+    const host = req.get('host') || `localhost:${process.env.PORT || 3001}`;
+    const logoUrl = `${protocol}://${host}/uploads/logos/${req.file.filename}`;
     return res.json({ url: logoUrl });
   } catch (err: any) {
     console.error('Logo upload error:', err);
