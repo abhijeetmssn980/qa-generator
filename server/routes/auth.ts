@@ -49,8 +49,8 @@ router.post('/login', async (req, res) => {
     // Fetch company to get address and logo from company table
     let companyAddress: string | undefined = undefined;
     let companyLogo: string | undefined = undefined;
-    if (user.company_id) {
-      const company = await getCompanyById(user.company_id);
+    if (user.companyId) {
+      const company = await getCompanyById(user.companyId);
       if (company) {
         companyAddress = company.address;
         companyLogo = company.logo;
@@ -63,7 +63,7 @@ router.post('/login', async (req, res) => {
         uid: user.uid,
         email: user.email,
         companyName: user.companyName,
-        companyId: user.company_id,
+        companyId: user.companyId,
         companyAddress,
         companyLogo,
         role: user.role,
