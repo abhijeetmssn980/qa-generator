@@ -130,17 +130,6 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
             placeholder="Enter company name"
             required
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: '14px',
-              boxSizing: 'border-box',
-              transition: 'all 0.2s',
-            }}
-            onFocus={(e) => (e.target.style.borderColor = '#3b82f6')}
-            onBlur={(e) => (e.target.style.borderColor = '#d1d5db')}
           />
         </div>
 
@@ -157,18 +146,8 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
             disabled={loading}
             rows={4}
             style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: '14px',
-              boxSizing: 'border-box',
-              fontFamily: 'inherit',
               resize: 'vertical',
-              transition: 'all 0.2s',
             }}
-            onFocus={(e) => (e.target.style.borderColor = '#3b82f6')}
-            onBlur={(e) => (e.target.style.borderColor = '#d1d5db')}
           />
         </div>
 
@@ -184,17 +163,6 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
             onChange={handleChange}
             placeholder="Enter phone number"
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: '14px',
-              boxSizing: 'border-box',
-              transition: 'all 0.2s',
-            }}
-            onFocus={(e) => (e.target.style.borderColor = '#3b82f6')}
-            onBlur={(e) => (e.target.style.borderColor = '#d1d5db')}
           />
         </div>
 
@@ -210,17 +178,6 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
             onChange={handleChange}
             placeholder="Enter company email"
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: '14px',
-              boxSizing: 'border-box',
-              transition: 'all 0.2s',
-            }}
-            onFocus={(e) => (e.target.style.borderColor = '#3b82f6')}
-            onBlur={(e) => (e.target.style.borderColor = '#d1d5db')}
           />
         </div>
 
@@ -271,17 +228,6 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
             onChange={handleChange}
             placeholder="https://example.com"
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: '14px',
-              boxSizing: 'border-box',
-              transition: 'all 0.2s',
-            }}
-            onFocus={(e) => (e.target.style.borderColor = '#3b82f6')}
-            onBlur={(e) => (e.target.style.borderColor = '#d1d5db')}
           />
         </div>
 

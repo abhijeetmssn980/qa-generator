@@ -406,7 +406,7 @@
 .table-top select,
 .search-input {
   margin-left: 8px;
-  padding: 8px 10px;
+  padding: 10px 14px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 0.9rem;
@@ -570,10 +570,9 @@
 }
 .form-group input,
 .form-group select {
-  height: 44px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 10px 14px;
   font-size: 0.95rem;
   transition: border-color 0.2s, box-shadow 0.2s;
   background: white;
