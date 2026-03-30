@@ -97,9 +97,8 @@ export async function apiGetMe(): Promise<{
 export async function apiCreateUser(
   email: string,
   password: string,
+  companyId?: number,
   companyName?: string,
-  companyLogo?: string,
-  companyAddress?: string,
   role?: UserRole
 ): Promise<{ message: string; user: { uid: string; email: string; companyName?: string; role: string } }> {
   const token = localStorage.getItem('token');
@@ -108,7 +107,7 @@ export async function apiCreateUser(
   }
   return request('/auth/create-user', {
     method: 'POST',
-    body: JSON.stringify({ email, password, companyName, companyLogo, companyAddress, role }),
+    body: JSON.stringify({ email, password, companyId, companyName, role }),
     headers: { 'Authorization': `Bearer ${token}` },
   });
 }

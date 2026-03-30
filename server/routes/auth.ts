@@ -114,7 +114,7 @@ router.post('/create-user', async (req, res) => {
     }
 
     // Create new user
-    const { email, password, companyName, companyLogo, companyAddress, role } = req.body;
+    const { email, password, companyId, companyName, role } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
@@ -138,9 +138,8 @@ router.post('/create-user', async (req, res) => {
       email,
       password: hashedPassword,
       createdAt: new Date().toISOString(),
+      companyId: companyId || undefined,
       companyName: companyName || 'My Company',
-      companyLogo,
-      companyAddress,
       role: assignedRole as 'admin' | 'editor' | 'viewer',
     };
 
