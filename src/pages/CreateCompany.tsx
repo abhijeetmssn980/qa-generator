@@ -57,27 +57,37 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
   };
 
   return (
-    <div className="card" style={{ maxWidth: '600px', margin: '0 auto' }}>
-      <h2 style={{ marginBottom: '20px' }}>Create New Company</h2>
+    <div style={{ width: '100%', padding: '20px' }}>
+      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+        <h1 style={{ marginBottom: '30px', fontSize: '32px', fontWeight: 'bold', color: '#1f2937' }}>
+          Create New Company
+        </h1>
 
-      {error && (
+        {error && (
+          <div style={{
+            padding: '16px',
+            marginBottom: '24px',
+            backgroundColor: '#fee2e2',
+            color: '#991b1b',
+            borderRadius: '8px',
+            border: '1px solid #fecaca',
+            fontSize: '14px',
+          }}>
+            ⚠️ {error}
+          </div>
+        )}
+
         <div style={{
-          padding: '12px',
-          marginBottom: '16px',
-          backgroundColor: '#fee',
-          color: '#c33',
-          borderRadius: '6px',
-          border: '1px solid #fcc',
+          backgroundColor: 'white',
+          padding: '32px',
+          borderRadius: '12px',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
         }}>
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit}>
         {/* Company Name */}
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-            Company Name *
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#374151' }}>
+            Company Name <span style={{ color: '#ef4444' }}>*</span>
           </label>
           <input
             type="text"
@@ -89,18 +99,21 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
             disabled={loading}
             style={{
               width: '100%',
-              padding: '10px',
-              border: '1px solid #ddd',
+              padding: '12px',
+              border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: '14px',
               boxSizing: 'border-box',
+              transition: 'all 0.2s',
             }}
+            onFocus={(e) => (e.target.style.borderColor = '#3b82f6')}
+            onBlur={(e) => (e.target.style.borderColor = '#d1d5db')}
           />
         </div>
 
         {/* Address */}
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#374151' }}>
             Address
           </label>
           <textarea
@@ -109,23 +122,26 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
             onChange={handleChange}
             placeholder="Enter company address"
             disabled={loading}
-            rows={3}
+            rows={4}
             style={{
               width: '100%',
-              padding: '10px',
-              border: '1px solid #ddd',
+              padding: '12px',
+              border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: '14px',
               boxSizing: 'border-box',
               fontFamily: 'inherit',
               resize: 'vertical',
+              transition: 'all 0.2s',
             }}
+            onFocus={(e) => (e.target.style.borderColor = '#3b82f6')}
+            onBlur={(e) => (e.target.style.borderColor = '#d1d5db')}
           />
         </div>
 
         {/* Phone */}
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#374151' }}>
             Phone
           </label>
           <input
@@ -137,18 +153,21 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
             disabled={loading}
             style={{
               width: '100%',
-              padding: '10px',
-              border: '1px solid #ddd',
+              padding: '12px',
+              border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: '14px',
               boxSizing: 'border-box',
+              transition: 'all 0.2s',
             }}
+            onFocus={(e) => (e.target.style.borderColor = '#3b82f6')}
+            onBlur={(e) => (e.target.style.borderColor = '#d1d5db')}
           />
         </div>
 
         {/* Email */}
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#374151' }}>
             Email
           </label>
           <input
@@ -160,18 +179,21 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
             disabled={loading}
             style={{
               width: '100%',
-              padding: '10px',
-              border: '1px solid #ddd',
+              padding: '12px',
+              border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: '14px',
               boxSizing: 'border-box',
+              transition: 'all 0.2s',
             }}
+            onFocus={(e) => (e.target.style.borderColor = '#3b82f6')}
+            onBlur={(e) => (e.target.style.borderColor = '#d1d5db')}
           />
         </div>
 
         {/* Website */}
-        <div style={{ marginBottom: '24px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+        <div style={{ marginBottom: '28px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#374151' }}>
             Website
           </label>
           <input
@@ -179,16 +201,19 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
             name="website"
             value={formData.website || ''}
             onChange={handleChange}
-            placeholder="Enter website URL (e.g., https://example.com)"
+            placeholder="https://example.com"
             disabled={loading}
             style={{
               width: '100%',
-              padding: '10px',
-              border: '1px solid #ddd',
+              padding: '12px',
+              border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: '14px',
               boxSizing: 'border-box',
+              transition: 'all 0.2s',
             }}
+            onFocus={(e) => (e.target.style.borderColor = '#3b82f6')}
+            onBlur={(e) => (e.target.style.borderColor = '#d1d5db')}
           />
         </div>
 
@@ -199,16 +224,19 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
             onClick={onCancel}
             disabled={loading}
             style={{
-              padding: '10px 24px',
+              padding: '12px 28px',
               borderRadius: '6px',
-              border: '1px solid #ddd',
-              backgroundColor: '#f5f5f5',
-              color: '#333',
+              border: '1px solid #d1d5db',
+              backgroundColor: '#ffffff',
+              color: '#374151',
               cursor: loading ? 'not-allowed' : 'pointer',
               fontSize: '14px',
-              fontWeight: '500',
+              fontWeight: '600',
+              transition: 'all 0.2s',
               opacity: loading ? 0.6 : 1,
             }}
+            onMouseEnter={(e) => !loading && (e.currentTarget.style.backgroundColor = '#f3f4f6')}
+            onMouseLeave={(e) => !loading && (e.currentTarget.style.backgroundColor = '#ffffff')}
           >
             Cancel
           </button>
@@ -216,21 +244,26 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
             type="submit"
             disabled={loading}
             style={{
-              padding: '10px 24px',
+              padding: '12px 28px',
               borderRadius: '6px',
               border: 'none',
               backgroundColor: '#3b82f6',
               color: 'white',
               cursor: loading ? 'not-allowed' : 'pointer',
               fontSize: '14px',
-              fontWeight: '500',
-              opacity: loading ? 0.6 : 1,
+              fontWeight: '600',
+              transition: 'all 0.2s',
+              opacity: loading ? 0.7 : 1,
             }}
+            onMouseEnter={(e) => !loading && (e.currentTarget.style.backgroundColor = '#2563eb')}
+            onMouseLeave={(e) => !loading && (e.currentTarget.style.backgroundColor = '#3b82f6')}
           >
-            {loading ? 'Creating...' : 'Create Company'}
+            {loading ? '⏳ Creating...' : '✓ Create Company'}
           </button>
         </div>
-      </form>
+          </form>
+        </div>
+      </div>
     </div>
   );
 };
