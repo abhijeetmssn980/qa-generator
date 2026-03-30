@@ -6,7 +6,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { findUserByEmail, addUser } from '../db';
+import { findUserByEmail, addUser, getCompanyById } from '../db';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'qa-generator-secret-key-2026';
@@ -132,14 +132,27 @@ router.post('/create-user', async (req, res) => {
       return res.status(409).json({ error: 'Email already registered' });
     }
 
+    // If companyId provided, validate company exists
+    let finalCompanyId = companyId || undefined;
+    let finalCompanyName = companyName || 'My Company';
+    
+    if (finalCompanyId) {
+      const company = await getCompanyById(finalCompanyId);
+      if (!company) {
+        return res.status(400).json({ error: `Company with ID ${finalCompanyId} does not exist` });
+      }
+      // Use company's actual name from database
+      finalCompanyName = company.name;
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = {
       uid: uuidv4(),
       email,
       password: hashedPassword,
       createdAt: new Date().toISOString(),
-      companyId: companyId || undefined,
-      companyName: companyName || 'My Company',
+      companyId: finalCompanyId,
+      companyName: finalCompanyName,
       companyLogo: undefined,
       companyAddress: undefined,
       role: assignedRole as 'admin' | 'editor' | 'viewer',
