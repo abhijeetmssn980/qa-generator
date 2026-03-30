@@ -84,6 +84,23 @@ async function initDB() {
       );
     `);
 
+    // Migrate existing users table: add company_id if it doesn't exist
+    try {
+      await client.query(
+        'ALTER TABLE users ADD COLUMN IF NOT EXISTS company_id INTEGER REFERENCES companies(id)'
+      );
+      await client.query(
+        'ALTER TABLE users ADD COLUMN IF NOT EXISTS company_logo VARCHAR(500)'
+      );
+      await client.query(
+        'ALTER TABLE users ADD COLUMN IF NOT EXISTS company_address TEXT'
+      );
+    } catch (migrationErr: any) {
+      if (!migrationErr.message.includes('already exists')) {
+        console.error('Migration warning:', migrationErr.message);
+      }
+    }
+
     // Create products table
     await client.query(`
       CREATE TABLE IF NOT EXISTS products (
