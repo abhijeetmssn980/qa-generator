@@ -198,7 +198,7 @@ export async function addCompany(company: Company): Promise<Company> {
   return {
     id: rows[0].id,
     name: rows[0].name,
-    logo: rows[0].logo,
+    logo: rows[0].logo ? `/api/companies/${rows[0].id}/logo` : undefined,
     address: rows[0].address,
     phone: rows[0].phone,
     email: rows[0].email,
@@ -213,7 +213,7 @@ export async function getCompanyByName(name: string): Promise<Company | undefine
   return {
     id: rows[0].id,
     name: rows[0].name,
-    logo: rows[0].logo,
+    logo: rows[0].logo ? `/api/companies/${rows[0].id}/logo` : undefined,
     address: rows[0].address,
     phone: rows[0].phone,
     email: rows[0].email,
@@ -225,10 +225,11 @@ export async function getCompanyByName(name: string): Promise<Company | undefine
 export async function getCompanyById(id: number): Promise<Company | undefined> {
   const { rows } = await pool.query('SELECT * FROM companies WHERE id = $1', [id]);
   if (rows.length === 0) return undefined;
+  // Don't return logo buffer in JSON - use URL instead
   return {
     id: rows[0].id,
     name: rows[0].name,
-    logo: rows[0].logo,
+    logo: rows[0].logo ? `/api/companies/${rows[0].id}/logo` : undefined,
     address: rows[0].address,
     phone: rows[0].phone,
     email: rows[0].email,
@@ -242,7 +243,7 @@ export async function getAllCompanies(): Promise<Company[]> {
   return rows.map((row) => ({
     id: row.id,
     name: row.name,
-    logo: row.logo,
+    logo: row.logo ? `/api/companies/${row.id}/logo` : undefined,
     address: row.address,
     phone: row.phone,
     email: row.email,
@@ -285,7 +286,7 @@ export async function updateCompany(id: number, updates: Partial<Company>): Prom
   return {
     id: rows[0].id,
     name: rows[0].name,
-    logo: rows[0].logo,
+    logo: rows[0].logo ? `/api/companies/${rows[0].id}/logo` : undefined,
     address: rows[0].address,
     phone: rows[0].phone,
     email: rows[0].email,
