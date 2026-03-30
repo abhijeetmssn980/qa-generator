@@ -40,27 +40,29 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    const token = jwt.sign(
-      { uid: user.uid, email: user.email, companyName: user.companyName },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    // Fetch company address from company table
+    // Fetch company details
+    let companyName: string | undefined = undefined;
     let companyAddress: string | undefined = undefined;
     if (user.companyId) {
       const company = await getCompanyById(user.companyId);
       if (company) {
+        companyName = company.name;
         companyAddress = company.address;
       }
     }
+
+    const token = jwt.sign(
+      { uid: user.uid, email: user.email, companyName },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
     return res.json({
       token,
       user: {
         uid: user.uid,
         email: user.email,
-        companyName: user.companyName,
+        companyName,
         companyId: user.companyId,
         companyAddress,
         role: user.role,
@@ -108,7 +110,7 @@ router.post('/create-user', async (req, res) => {
     }
 
     // Create new user
-    const { email, password, companyId, companyName, role } = req.body;
+    const { email, password, companyId, role } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
@@ -128,19 +130,11 @@ router.post('/create-user', async (req, res) => {
 
     // If companyId provided, validate company exists
     let finalCompanyId = companyId || undefined;
-    let finalCompanyName = companyName || 'My Company';
-    let finalCompanyLogo: string | undefined = undefined;
-    let finalCompanyAddress: string | undefined = undefined;
-    
     if (finalCompanyId) {
       const company = await getCompanyById(finalCompanyId);
       if (!company) {
         return res.status(400).json({ error: `Company with ID ${finalCompanyId} does not exist` });
       }
-      // Use company's actual data from database
-      finalCompanyName = company.name;
-      finalCompanyLogo = company.logo;
-      finalCompanyAddress = company.address;
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -150,20 +144,30 @@ router.post('/create-user', async (req, res) => {
       password: hashedPassword,
       createdAt: new Date().toISOString(),
       companyId: finalCompanyId,
-      companyName: finalCompanyName,
-      companyLogo: finalCompanyLogo,
-      companyAddress: finalCompanyAddress,
       role: assignedRole as 'admin' | 'editor' | 'viewer',
     };
 
     await addUser(newUser);
+
+    // Fetch company details for response
+    let companyName: string | undefined = undefined;
+    let companyAddress: string | undefined = undefined;
+    if (finalCompanyId) {
+      const company = await getCompanyById(finalCompanyId);
+      if (company) {
+        companyName = company.name;
+        companyAddress = company.address;
+      }
+    }
 
     return res.status(201).json({
       message: 'User created successfully',
       user: {
         uid: newUser.uid,
         email: newUser.email,
-        companyName: newUser.companyName,
+        companyId: finalCompanyId,
+        companyName,
+        companyAddress,
         role: newUser.role,
       },
     });
@@ -189,11 +193,13 @@ router.get('/me', async (req, res) => {
       return res.status(401).json({ error: 'User not found' });
     }
 
-    // Fetch company address from company table
+    // Fetch company details from company table
+    let companyName: string | undefined = undefined;
     let companyAddress: string | undefined = undefined;
-    if (user.company_id) {
-      const company = await getCompanyById(user.company_id);
+    if (user.companyId) {
+      const company = await getCompanyById(user.companyId);
       if (company) {
+        companyName = company.name;
         companyAddress = company.address;
       }
     }
@@ -202,8 +208,8 @@ router.get('/me', async (req, res) => {
       user: {
         uid: user.uid,
         email: user.email,
-        companyName: user.companyName,
-        companyId: user.company_id,
+        companyName,
+        companyId: user.companyId,
         companyAddress,
         role: user.role,
       },

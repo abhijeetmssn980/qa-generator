@@ -6,13 +6,14 @@ import ProductsList from './ProductsList';
 import ViewProduct from './ViewProduct';
 import ManageUsers from './ManageUsers';
 import BulkUpload from './BulkUpload';
+import CreateCompany from './CreateCompany';
 import Trash from './Trash';
 import Logo from '../components/Logo';
 import { apiGetProducts, apiAddProduct, apiUpdateProduct, apiDeleteProduct } from '../services/api';
-import type { Product } from '../services/api';
+import type { Product, Company } from '../services/api';
 import type { UserRole } from '../services/api';
 
-type Page = 'dashboard' | 'add' | 'edit' | 'list' | 'trash' | 'view' | 'users' | 'bulk-upload';
+type Page = 'dashboard' | 'add' | 'edit' | 'list' | 'trash' | 'view' | 'users' | 'bulk-upload' | 'create-company';
 
 interface User {
   email: string;
@@ -119,6 +120,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         ) : null;
       case 'users':
         return <ManageUsers adminCompanyName={user.companyName} />;
+      case 'create-company':
+        return user.role === 'admin' ? (
+          <CreateCompany onCompanyCreated={() => setPage('dashboard')} onCancel={() => setPage('dashboard')} />
+        ) : <div className="page-placeholder">Only admins can create companies.</div>;
       case 'bulk-upload':
         return <BulkUpload onUploadComplete={async () => {
           const products = await apiGetProducts();
@@ -224,6 +229,18 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
               >
                 <span className="nav-icon">👥</span>
                 Manage Users
+              </a>
+              <a
+                href="#"
+                className={page === 'create-company' ? 'active' : ''}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setPage('create-company');
+                  setSidebarOpen(false);
+                }}
+              >
+                <span className="nav-icon">🏢</span>
+                Create Company
               </a>
               <a
                 href="#"

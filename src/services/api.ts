@@ -238,8 +238,16 @@ export async function apiGetAllCompanies(): Promise<Company[]> {
   return request('/companies');
 }
 
+
 export async function apiGetCompanyById(id: number): Promise<Company> {
   return request(`/companies/${id}`);
+}
+
+export async function apiCreateCompany(company: Company): Promise<Company> {
+  return request('/companies', {
+    method: 'POST',
+    body: JSON.stringify(company),
+  });
 }
 
 export async function apiUpdateCompany(id: number, updates: Partial<Company>): Promise<Company> {

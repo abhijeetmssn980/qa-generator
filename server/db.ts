@@ -43,8 +43,6 @@ export interface User {
   password: string; // hashed
   createdAt: string;
   companyId?: number;
-  companyName?: string;
-  companyAddress?: string;
   role?: UserRole;
 }
 
@@ -344,16 +342,14 @@ export async function findUserByEmail(email: string): Promise<User | undefined> 
     password: rows[0].password,
     createdAt: rows[0].created_at,
     companyId: rows[0].company_id,
-    companyName: rows[0].company_name,
-    companyAddress: rows[0].company_address,
     role: rows[0].role || 'user',
   };
 }
 
 export async function addUser(user: User): Promise<User> {
   await pool.query(
-    'INSERT INTO users (uid, email, password, company_id, company_name, company_address, role) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-    [user.uid, user.email, user.password, user.companyId || null, user.companyName || null, user.companyAddress || null, user.role || 'user']
+    'INSERT INTO users (uid, email, password, company_id, role) VALUES ($1, $2, $3, $4, $5)',
+    [user.uid, user.email, user.password, user.companyId || null, user.role || 'user']
   );
   return user;
 }

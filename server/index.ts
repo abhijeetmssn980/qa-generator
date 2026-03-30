@@ -76,8 +76,6 @@ async function initDB() {
         email             VARCHAR(255) UNIQUE NOT NULL,
         password          VARCHAR(255) NOT NULL,
         company_id        INTEGER REFERENCES companies(id),
-        company_name      VARCHAR(255),
-        company_address   TEXT,
         role              VARCHAR(50) DEFAULT 'viewer',
         created_at        TIMESTAMPTZ DEFAULT NOW()
       );
@@ -88,12 +86,15 @@ async function initDB() {
       await client.query(
         'ALTER TABLE users ADD COLUMN IF NOT EXISTS company_id INTEGER REFERENCES companies(id)'
       );
-      await client.query(
-        'ALTER TABLE users ADD COLUMN IF NOT EXISTS company_address TEXT'
-      );
-      // Drop redundant company_logo column - fetch from company table instead
+      // Drop redundant company-related columns - fetch from company table instead
       await client.query(
         'ALTER TABLE users DROP COLUMN IF EXISTS company_logo'
+      );
+      await client.query(
+        'ALTER TABLE users DROP COLUMN IF EXISTS company_name'
+      );
+      await client.query(
+        'ALTER TABLE users DROP COLUMN IF EXISTS company_address'
       );
     } catch (migrationErr: any) {
       if (!migrationErr.message.includes('already exists')) {
