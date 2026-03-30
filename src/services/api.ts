@@ -53,7 +53,6 @@ export interface AuthResponse {
     email: string;
     companyId?: number;
     companyName?: string;
-    companyLogo?: string;
     companyAddress?: string;
     role?: UserRole;
   };

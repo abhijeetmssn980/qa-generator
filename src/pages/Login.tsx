@@ -8,7 +8,7 @@ interface LoginProps {
     email: string;
     uid: string;
     companyName?: string;
-    companyLogo?: string;
+    companyId?: number;
     companyAddress?: string;
     role?: UserRole;
   }) => void;
