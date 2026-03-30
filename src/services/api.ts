@@ -97,16 +97,15 @@ export async function apiCreateUser(
   email: string,
   password: string,
   companyId?: number,
-  companyName?: string,
   role?: UserRole
-): Promise<{ message: string; user: { uid: string; email: string; companyName?: string; role: string } }> {
+): Promise<{ message: string; user: { uid: string; email: string; role: string } }> {
   const token = localStorage.getItem('token');
   if (!token) {
     throw new Error('Not authenticated');
   }
   return request('/auth/create-user', {
     method: 'POST',
-    body: JSON.stringify({ email, password, companyId, companyName, role }),
+    body: JSON.stringify({ email, password, companyId, role }),
     headers: { 'Authorization': `Bearer ${token}` },
   });
 }

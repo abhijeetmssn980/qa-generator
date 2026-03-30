@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { apiCreateUser, apiGetAllCompanies, apiAddCompany, apiUploadLogo } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { apiCreateUser, apiGetAllCompanies } from '../services/api';
 import type { UserRole, Company } from '../services/api';
 
 interface ManageUsersProps {
@@ -10,17 +10,11 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [companyId, setCompanyId] = useState<number | string>('');
-  const [companyName, setCompanyName] = useState(adminCompanyName || '');
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [logoUploading, setLogoUploading] = useState(false);
   const [role, setRole] = useState<UserRole>('viewer');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companiesLoading, setCompaniesLoading] = useState(false);
-  const [useExistingCompany, setUseExistingCompany] = useState(true);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch companies on mount
   useEffect(() => {
@@ -45,17 +39,6 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
     fetchCompanies();
   }, [adminCompanyName]);
 
-  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Store file and show local preview
-    setLogoFile(file);
-    const reader = new FileReader();
-    reader.onload = (ev) => setLogoPreview(ev.target?.result as string);
-    reader.readAsDataURL(file);
-  };
-
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
@@ -70,48 +53,20 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
       return;
     }
 
-    if (useExistingCompany && !companyId) {
+    if (!companyId) {
       setMessage({ type: 'error', text: 'Please select a company.' });
-      return;
-    }
-
-    if (!useExistingCompany && !companyName) {
-      setMessage({ type: 'error', text: 'Please provide a company name.' });
       return;
     }
 
     setLoading(true);
     try {
-      let finalCompanyId: number | undefined = undefined;
-
-      // If creating new company, create it first
-      if (!useExistingCompany) {
-        const newCompany = await apiAddCompany({
-          name: companyName,
-        });
-        finalCompanyId = newCompany.id;
-
-        // Upload logo if provided
-        if (logoFile && finalCompanyId) {
-          try {
-            setLogoUploading(true);
-            await apiUploadLogo(logoFile, finalCompanyId);
-          } catch (err: any) {
-            console.error('Logo upload error (non-fatal):', err.message);
-          } finally {
-            setLogoUploading(false);
-          }
-        }
-      } else {
-        finalCompanyId = Number(companyId);
-      }
+      const finalCompanyId = Number(companyId);
 
       // Create user linked to company
       const result = await apiCreateUser(
         email,
         password,
         finalCompanyId,
-        undefined,
         role
       );
       setMessage({ type: 'success', text: `User "${result.user.email}" created as ${role}!` });
@@ -120,10 +75,6 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
       setPassword('');
       setRole('viewer');
       setCompanyId('');
-      setCompanyName('');
-      setLogoFile(null);
-      setLogoPreview(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Failed to create user.' });
     } finally {
@@ -163,6 +114,36 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
 
       <form className="add-product-form" onSubmit={handleCreateUser}>
         <div className="form-grid">
+          {/* Company Selection */}
+          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+            <label>Select Company *</label>
+            <select
+              value={companyId}
+              onChange={(e) => setCompanyId(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '14px',
+                background: 'white',
+              }}
+              disabled={companiesLoading}
+              required
+            >
+              <option value="">-- Select a company --</option>
+              {companies.map((company) => (
+                <option key={company.id} value={company.id}>
+                  {company.name}
+                </option>
+              ))}
+            </select>
+            {companiesLoading && <p style={{ fontSize: '13px', color: '#6366f1', marginTop: '4px' }}>Loading companies...</p>}
+            {!companiesLoading && companies.length === 0 && (
+              <p style={{ fontSize: '13px', color: '#dc2626', marginTop: '4px' }}>No companies available. Create a company first.</p>
+            )}
+          </div>
+
           <div className="form-group">
             <label>Email *</label>
             <input
@@ -226,103 +207,10 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
               ))}
             </div>
           </div>
-
-          {/* Company Selection */}
-          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-            <label style={{ marginBottom: '16px', display: 'block' }}>Company Selection *</label>
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <input
-                  type="radio"
-                  checked={useExistingCompany}
-                  onChange={() => setUseExistingCompany(true)}
-                />
-                <span>Select Existing Company</span>
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <input
-                  type="radio"
-                  checked={!useExistingCompany}
-                  onChange={() => setUseExistingCompany(false)}
-                />
-                <span>Create New Company</span>
-              </label>
-            </div>
-
-            {useExistingCompany ? (
-              <div>
-                <select
-                  value={companyId}
-                  onChange={(e) => setCompanyId(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    background: 'white',
-                  }}
-                  disabled={companiesLoading}
-                >
-                  <option value="">-- Select a company --</option>
-                  {companies.map((company) => (
-                    <option key={company.id} value={company.id}>
-                      {company.name}
-                    </option>
-                  ))}
-                </select>
-                {companiesLoading && <p style={{ fontSize: '13px', color: '#6366f1', marginTop: '4px' }}>Loading companies...</p>}
-                {!companiesLoading && companies.length === 0 && (
-                  <p style={{ fontSize: '13px', color: '#dc2626', marginTop: '4px' }}>No companies available. Please switch to "Create New Company".</p>
-                )}
-              </div>
-            ) : (
-              <div>
-                <div style={{ marginBottom: '12px' }}>
-                  <input
-                    type="text"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                    placeholder="New Company Name"
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                    }}
-                  />
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/png,image/jpeg,image/svg+xml,image/webp"
-                    onChange={handleLogoSelect}
-                    style={{ flex: 1, fontSize: '13px' }}
-                  />
-                  {logoUploading && <span style={{ fontSize: '13px', color: '#6366f1' }}>⏳ Uploading...</span>}
-                  {logoPreview && !logoUploading && (
-                    <img
-                      src={logoPreview}
-                      alt="Logo preview"
-                      style={{
-                        width: '40px',
-                        height: '40px',
-                        objectFit: 'contain',
-                        borderRadius: '6px',
-                        border: '1px solid #e2e8f0',
-                      }}
-                    />
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
         </div>
 
         <div style={{ marginTop: '24px' }}>
-          <button type="submit" className="primary-btn" disabled={loading || logoUploading}>
+          <button type="submit" className="primary-btn" disabled={loading}>
             {loading ? '⏳ Creating...' : '➕ Create User'}
           </button>
         </div>
