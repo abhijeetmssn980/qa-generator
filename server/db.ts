@@ -301,10 +301,12 @@ export async function updateCompany(id: number, updates: Partial<Company>): Prom
 export async function updateCompanyLogo(id: number, logoBuffer: Buffer): Promise<boolean> {
   try {
     console.log('[DB] updateCompanyLogo - ID:', id, 'Buffer size:', logoBuffer.length);
-    // Explicitly cast to bytea to ensure proper binary handling
+    // Convert buffer to hex string format that PostgreSQL bytea understands
+    const hexString = '\\x' + logoBuffer.toString('hex');
+    console.log('[DB] Hex string length:', hexString.length);
     const result = await pool.query(
       'UPDATE companies SET logo = $1::bytea WHERE id = $2',
-      [logoBuffer, id]
+      [hexString, id]
     );
     console.log('[DB] updateCompanyLogo - Rows affected:', result.rowCount);
     return (result.rowCount ?? 0) > 0;
