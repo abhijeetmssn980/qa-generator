@@ -5,14 +5,13 @@ import type { Hazard } from '../services/api';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { formatByPrecision, parseDateStr, hasDayPart, type DatePrecision } from '../utils/dates';
+import { assetUrl } from '../utils/assetUrl';
 
 interface EditProductProps {
   product: Product;
   onSave: (uniqueId: string, updates: Partial<Product>) => void;
   onCancel: () => void;
 }
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) => {
   const isMaster = product.is_master === true;
@@ -57,17 +56,14 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
     });
   };
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const existingImageUrl = product.productImage
-    ? `${API_BASE.replace('/api', '')}${product.productImage}`
-    : null;
+  // productImage / leafletUrl may be an absolute S3 URL or a relative /api path — assetUrl handles both.
+  const existingImageUrl = assetUrl(product.productImage) ?? null;
   const [imagePreview, setImagePreview] = useState<string | null>(existingImageUrl);
   const [removeImage, setRemoveImage] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
-  // Leaflet (PDF) — upload / replace / remove
-  const existingLeafletUrl = product.leafletUrl
-    ? `${API_BASE.replace('/api', '')}${product.leafletUrl}`
-    : null;
+  // Leaflet (PDF) — upload / replace / remove.
+  const existingLeafletUrl = assetUrl(product.leafletUrl) ?? null;
   const [leafletFile, setLeafletFile] = useState<File | null>(null);
   const leafletExists = !!existingLeafletUrl;
   const [removeLeaflet, setRemoveLeaflet] = useState(false);

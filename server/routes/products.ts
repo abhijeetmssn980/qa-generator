@@ -15,9 +15,11 @@ import {
   findUserByEmail,
   getMasterProducts,
   updateProductImage,
+  setProductImageUrl,
   getProductImage,
   deleteProductImage,
   updateProductLeaflet,
+  setProductLeafletUrl,
   getProductLeaflet,
   deleteProductLeaflet,
   generateUniqueId,
@@ -29,6 +31,7 @@ import {
   getHazards,
 } from '../db';
 import { authenticateToken, requireRole } from '../middleware';
+import { s3Enabled, uploadLeaflet, deleteLeaflet, uploadImage, deleteImage } from '../s3';
 import type { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import pool from '../pool';
@@ -143,7 +146,7 @@ router.post(
   },
   async (req: Request, res: Response) => {
   try {
-    const { uniqueId } = req.params;
+    const uniqueId = req.params.uniqueId as string;
     if (!req.file) {
       return res.status(400).json({ error: 'No image file uploaded' });
     }
@@ -160,11 +163,20 @@ router.post(
       .toBuffer();
 
     console.log(`[upload-image] ${uniqueId}: ${req.file.size} bytes → ${resizedBuffer.length} bytes`);
-    const success = await updateProductImage(uniqueId, resizedBuffer);
+
+    let productImage: string;
+    let success: boolean;
+    if (s3Enabled) {
+      productImage = await uploadImage(uniqueId, resizedBuffer, Date.now());
+      success = await setProductImageUrl(uniqueId, productImage);
+    } else {
+      success = await updateProductImage(uniqueId, resizedBuffer);
+      productImage = `/api/products/${uniqueId}/image`;
+    }
     if (!success) {
       return res.status(500).json({ error: 'Failed to save image' });
     }
-    return res.json({ message: 'Product image uploaded successfully', productImage: `/api/products/${uniqueId}/image` });
+    return res.json({ message: 'Product image uploaded successfully', productImage });
   } catch (err) {
     console.error('Upload product image error:', err);
     return res.status(500).json({ error: 'Failed to upload product image' });
@@ -210,7 +222,11 @@ router.get('/:uniqueId/image', async (req: Request, res: Response) => {
 // DELETE /api/products/:uniqueId/image — remove product image (admin or editor only)
 router.delete('/:uniqueId/image', authenticateToken, requireRole('admin', 'editor'), async (req: Request, res: Response) => {
   try {
-    const deleted = await deleteProductImage(req.params.uniqueId as string);
+    const uniqueId = req.params.uniqueId as string;
+    if (s3Enabled) {
+      try { await deleteImage(uniqueId); } catch (e) { console.error('S3 image delete failed:', e); }
+    }
+    const deleted = await deleteProductImage(uniqueId);
     if (!deleted) {
       return res.status(404).json({ error: 'Product not found' });
     }
@@ -243,11 +259,22 @@ router.post(
       if (!product) {
         return res.status(404).json({ error: 'Product not found' });
       }
-      const success = await updateProductLeaflet(uniqueId, req.file.buffer);
+
+      let leafletUrl: string;
+      let success: boolean;
+      if (s3Enabled) {
+        // Store in S3; DB keeps the absolute public URL.
+        leafletUrl = await uploadLeaflet(uniqueId, req.file.buffer, Date.now());
+        success = await setProductLeafletUrl(uniqueId, leafletUrl);
+      } else {
+        // Fallback: store the PDF in Postgres, served via GET /:id/leaflet.
+        success = await updateProductLeaflet(uniqueId, req.file.buffer);
+        leafletUrl = `/api/products/${uniqueId}/leaflet`;
+      }
       if (!success) {
         return res.status(500).json({ error: 'Failed to save leaflet' });
       }
-      return res.json({ message: 'Leaflet uploaded successfully', leafletUrl: `/api/products/${uniqueId}/leaflet` });
+      return res.json({ message: 'Leaflet uploaded successfully', leafletUrl });
     } catch (err) {
       console.error('Upload leaflet error:', err);
       return res.status(500).json({ error: 'Failed to upload leaflet' });
@@ -258,7 +285,12 @@ router.post(
 // DELETE /api/products/:uniqueId/leaflet — remove leaflet PDF (admin or editor only)
 router.delete('/:uniqueId/leaflet', authenticateToken, requireRole('admin', 'editor'), async (req: Request, res: Response) => {
   try {
-    const deleted = await deleteProductLeaflet(req.params.uniqueId as string);
+    const uniqueId = req.params.uniqueId as string;
+    if (s3Enabled) {
+      // Best-effort S3 cleanup; DB is the source of truth for whether a leaflet exists.
+      try { await deleteLeaflet(uniqueId); } catch (e) { console.error('S3 leaflet delete failed:', e); }
+    }
+    const deleted = await deleteProductLeaflet(uniqueId);
     if (!deleted) {
       return res.status(404).json({ error: 'Product not found' });
     }

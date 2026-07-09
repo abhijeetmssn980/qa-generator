@@ -63,23 +63,28 @@ export interface User {
 // ── Helper: map a DB row to Product ──
 // Image/leaflet resolution: use the product's own asset when present, otherwise
 // fall back to its master product's asset (master info comes from the LEFT JOIN
-// aliased `m` — master_unique_id / master_has_image / master_has_leaflet).
+// aliased `m` — master_unique_id / master_product_image_url / master_leaflet_url).
 function rowToProduct(row: any): Product {
-  const ownImage = !!row.product_image;
-  const ownLeaflet = !!row.leaflet;
   const masterUid = row.master_unique_id;
   const canInherit = !row.is_master && !!masterUid;
 
-  const productImage = ownImage
-    ? `/api/products/${row.unique_id}/image`
-    : canInherit && row.master_has_image
-      ? `/api/products/${masterUid}/image`
+  // Both image and leaflet links come straight from their *_url column (absolute
+  // S3 URL, or a relative /api path for the Postgres fallback). A child with none
+  // of its own inherits the master's.
+  const ownImageUrl: string | null = row.product_image_url || null;
+  const ownImage = !!ownImageUrl;
+  const productImage = ownImageUrl
+    ? ownImageUrl
+    : canInherit && row.master_product_image_url
+      ? (row.master_product_image_url as string)
       : undefined;
 
-  const leafletUrl = ownLeaflet
-    ? `/api/products/${row.unique_id}/leaflet`
-    : canInherit && row.master_has_leaflet
-      ? `/api/products/${masterUid}/leaflet`
+  const ownLeafletUrl: string | null = row.leaflet_url || null;
+  const ownLeaflet = !!ownLeafletUrl;
+  const leafletUrl = ownLeafletUrl
+    ? ownLeafletUrl
+    : canInherit && row.master_leaflet_url
+      ? (row.master_leaflet_url as string)
       : undefined;
 
   return {
@@ -123,8 +128,8 @@ export async function getProducts(companyId?: number, isAdmin?: boolean): Promis
     const { rows } = await pool.query(
       `SELECT p.*, c.name as company_name, h.name as hazard_name,
               m.unique_id AS master_unique_id,
-              (m.product_image IS NOT NULL) AS master_has_image,
-              (m.leaflet IS NOT NULL) AS master_has_leaflet
+              m.product_image_url AS master_product_image_url,
+              m.leaflet_url AS master_leaflet_url
        FROM products p
        LEFT JOIN companies c ON p.company_id = c.id
        LEFT JOIN hazards h ON h.id = p.hazard_id
@@ -138,8 +143,8 @@ export async function getProducts(companyId?: number, isAdmin?: boolean): Promis
   const { rows } = await pool.query(
     `SELECT p.*, c.name as company_name, h.name as hazard_name,
             m.unique_id AS master_unique_id,
-            (m.product_image IS NOT NULL) AS master_has_image,
-            (m.leaflet IS NOT NULL) AS master_has_leaflet
+            m.product_image_url AS master_product_image_url,
+            m.leaflet_url AS master_leaflet_url
      FROM products p
      LEFT JOIN companies c ON p.company_id = c.id
      LEFT JOIN hazards h ON h.id = p.hazard_id
@@ -196,8 +201,8 @@ export async function getProductByUniqueId(uniqueId: string): Promise<Product | 
        c.name as company_name,
        h.name as hazard_name,
        m.unique_id AS master_unique_id,
-       (m.product_image IS NOT NULL) AS master_has_image,
-       (m.leaflet IS NOT NULL) AS master_has_leaflet,
+       m.product_image_url AS master_product_image_url,
+       m.leaflet_url AS master_leaflet_url,
        COALESCE(NULLIF(TRIM(p.manufacturer_licence), ''), m.manufacturer_licence) as manufacturer_licence,
        COALESCE(NULLIF(TRIM(p.technical_name), ''), m.technical_name) as technical_name,
        COALESCE(NULLIF(TRIM(p.registration_number), ''), m.registration_number) as registration_number,
@@ -619,12 +624,24 @@ export async function addUser(user: User): Promise<User> {
 }
 
 // ── Product Image ──
-// Stores the image only on this product. Children with no own image inherit the
-// master's image at read time (see rowToProduct), so no physical cascade is needed.
+// Like the leaflet: both backends funnel through product_image_url (the single
+// source the read path uses). A child with none inherits its master's at read time.
+
+// S3 path: store the absolute public URL, clear any Postgres blob.
+export async function setProductImageUrl(uniqueId: string, url: string): Promise<boolean> {
+  const result = await pool.query(
+    'UPDATE products SET product_image_url = $1, product_image = NULL WHERE unique_id = $2',
+    [url, uniqueId]
+  );
+  return (result.rowCount ?? 0) > 0;
+}
+
+// Postgres fallback (no S3 configured): store the blob and point product_image_url
+// at the serve endpoint so the read path resolves uniformly.
 export async function updateProductImage(uniqueId: string, imageBuffer: Buffer): Promise<boolean> {
   const result = await pool.query(
-    'UPDATE products SET product_image = $1 WHERE unique_id = $2',
-    [imageBuffer, uniqueId]
+    'UPDATE products SET product_image = $1, product_image_url = $2 WHERE unique_id = $3',
+    [imageBuffer, `/api/products/${uniqueId}/image`, uniqueId]
   );
   return (result.rowCount ?? 0) > 0;
 }
@@ -635,22 +652,34 @@ export async function getProductImage(uniqueId: string): Promise<Buffer | null> 
   return rows[0].product_image;
 }
 
-// Clears this product's own image. A child then falls back to its master's image at read time.
+// Clears this product's own image (both backends). A child then falls back to its master's.
 export async function deleteProductImage(uniqueId: string): Promise<boolean> {
   const result = await pool.query(
-    'UPDATE products SET product_image = NULL WHERE unique_id = $1',
+    'UPDATE products SET product_image = NULL, product_image_url = NULL WHERE unique_id = $1',
     [uniqueId]
   );
   return (result.rowCount ?? 0) > 0;
 }
 
 // ── Product Leaflet (PDF) ──
-// Stores the leaflet only on this product. Children with no own leaflet inherit the
-// master's leaflet at read time (see rowToProduct), so no physical cascade is needed.
+// Two storage backends, both funnelled through leaflet_url (the single source the
+// read path uses). A child with no leaflet_url inherits its master's at read time.
+
+// S3 path: store the absolute public URL, clear any Postgres blob.
+export async function setProductLeafletUrl(uniqueId: string, url: string): Promise<boolean> {
+  const result = await pool.query(
+    'UPDATE products SET leaflet_url = $1, leaflet = NULL WHERE unique_id = $2',
+    [url, uniqueId]
+  );
+  return (result.rowCount ?? 0) > 0;
+}
+
+// Postgres fallback (no S3 configured): store the blob and point leaflet_url at
+// the serve endpoint so the read path resolves uniformly.
 export async function updateProductLeaflet(uniqueId: string, leafletBuffer: Buffer): Promise<boolean> {
   const result = await pool.query(
-    'UPDATE products SET leaflet = $1 WHERE unique_id = $2',
-    [leafletBuffer, uniqueId]
+    'UPDATE products SET leaflet = $1, leaflet_url = $2 WHERE unique_id = $3',
+    [leafletBuffer, `/api/products/${uniqueId}/leaflet`, uniqueId]
   );
   return (result.rowCount ?? 0) > 0;
 }
@@ -661,10 +690,10 @@ export async function getProductLeaflet(uniqueId: string): Promise<Buffer | null
   return rows[0].leaflet;
 }
 
-// Clears this product's own leaflet. A child then falls back to its master's leaflet at read time.
+// Clears this product's own leaflet (both backends). A child then falls back to its master's.
 export async function deleteProductLeaflet(uniqueId: string): Promise<boolean> {
   const result = await pool.query(
-    'UPDATE products SET leaflet = NULL WHERE unique_id = $1',
+    'UPDATE products SET leaflet = NULL, leaflet_url = NULL WHERE unique_id = $1',
     [uniqueId]
   );
   return (result.rowCount ?? 0) > 0;

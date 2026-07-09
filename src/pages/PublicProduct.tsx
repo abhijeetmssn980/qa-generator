@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiGetProductByUniqueId, apiGetCompanyPublic, apiLogScan } from '../services/api';
 import type { Product } from '../services/api';
 import { formatProductDate } from '../utils/dates';
+import { assetUrl } from '../utils/assetUrl';
 import '../ViewProduct.css';
 
 type PublicProductProps = {
@@ -50,7 +51,8 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
           }
           // Preload images before showing page
           const imagesToLoad: string[] = [];
-          if (prod.productImage) imagesToLoad.push(`${API_BASE.replace('/api', '')}${prod.productImage}`);
+          const preloadImg = assetUrl(prod.productImage);
+          if (preloadImg) imagesToLoad.push(preloadImg);
           else if (prod.imageUrl) imagesToLoad.push(prod.imageUrl);
           if (prod.hazardId) imagesToLoad.push(`${API_BASE}/hazards/${prod.hazardId}/image`);
 
@@ -225,7 +227,7 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
               {(product.productImage || product.imageUrl) && (
                 <div className="product-image-box">
                   <img
-                    src={product.productImage ? `${API_BASE.replace('/api', '')}${product.productImage}?quality=50` : product.imageUrl}
+                    src={assetUrl(product.productImage, { small: true }) || product.imageUrl}
                     alt={product.name}
                     className="product-detail-img"
                   />
@@ -259,7 +261,7 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
             {product.leafletUrl ? (
               <p>
                 <a
-                  href={`${API_BASE.replace('/api', '')}${product.leafletUrl}`}
+                  href={assetUrl(product.leafletUrl)}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

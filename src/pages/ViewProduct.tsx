@@ -5,6 +5,7 @@ import type { Product, Company } from '../services/api';
 import { apiGetCompanyById } from '../services/api';
 import Spinner from '../components/Spinner';
 import { formatProductDate } from '../utils/dates';
+import { assetUrl } from '../utils/assetUrl';
 
 type ViewProductProps = {
   product: Product;
@@ -31,7 +32,8 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
   // Preload product and hazard images before showing page
   useEffect(() => {
     const imagesToLoad: string[] = [];
-    if (product.productImage) imagesToLoad.push(`${API_BASE.replace('/api', '')}${product.productImage}`);
+    const preloadImg = assetUrl(product.productImage);
+    if (preloadImg) imagesToLoad.push(preloadImg);
     else if (product.imageUrl) imagesToLoad.push(product.imageUrl);
     if (product.hazardId) imagesToLoad.push(`${API_BASE}/hazards/${product.hazardId}/image`);
 
@@ -235,7 +237,7 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
                 )}
                 {(product.productImage || product.imageUrl) && (
                   <img
-                    src={product.productImage ? `${API_BASE.replace('/api', '')}${product.productImage}` : product.imageUrl}
+                    src={assetUrl(product.productImage) || product.imageUrl}
                     alt={product.name}
                     style={{ maxWidth: '120px', maxHeight: '120px', objectFit: 'contain', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#f8fafb' }}
                   />
@@ -248,7 +250,7 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
               {product.leafletUrl ? (
                 <p>
                   <a
-                    href={`${API_BASE.replace('/api', '')}${product.leafletUrl}`}
+                    href={assetUrl(product.leafletUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
                   >

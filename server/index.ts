@@ -222,6 +222,22 @@ async function initDB() {
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS quantity VARCHAR(100)');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS product_image BYTEA');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS leaflet BYTEA');
+    // leaflet_url holds the resolved leaflet link: an absolute S3 URL when S3 is
+    // configured, otherwise a relative /api/products/<id>/leaflet path (Postgres BYTEA fallback).
+    await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS leaflet_url VARCHAR(1000)');
+    // Backfill leaflets that were stored as BYTEA before leaflet_url existed, so
+    // they keep resolving via the serve endpoint after the read path switched to leaflet_url.
+    await client.query(
+      `UPDATE products SET leaflet_url = '/api/products/' || unique_id || '/leaflet'
+       WHERE leaflet IS NOT NULL AND leaflet_url IS NULL`
+    );
+    // Same for images: product_image_url holds an absolute S3 URL when S3 is
+    // configured, otherwise a relative /api/products/<id>/image path (Postgres BYTEA fallback).
+    await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS product_image_url VARCHAR(1000)');
+    await client.query(
+      `UPDATE products SET product_image_url = '/api/products/' || unique_id || '/image'
+       WHERE product_image IS NOT NULL AND product_image_url IS NULL`
+    );
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url VARCHAR(500)');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS hazard_symbol VARCHAR(255)');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS hazard_id INTEGER');
