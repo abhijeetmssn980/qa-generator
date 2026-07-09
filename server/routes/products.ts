@@ -38,10 +38,11 @@ const router = Router();
 // Multer: store uploaded file in memory
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
-// Multer for product image upload (5MB limit)
+// Multer for product image upload — accept up to 15MB (large phone photos);
+// the image is aggressively downscaled/re-encoded before storing.
 const productImageUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 15 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const allowed = ['.png', '.jpg', '.jpeg', '.webp'];
     const ext = path.extname(file.originalname).toLowerCase();
@@ -127,7 +128,20 @@ router.get('/master', authenticateToken, async (_req, res) => {
 });
 
 // POST /api/products/:uniqueId/upload-image — upload product image
-router.post('/:uniqueId/upload-image', authenticateToken, productImageUpload.single('productImage'), async (req: Request, res: Response) => {
+router.post(
+  '/:uniqueId/upload-image',
+  authenticateToken,
+  (req: Request, res: Response, next: NextFunction) => {
+    // Wrap multer so validation errors (wrong type / too large) return JSON, not an HTML 500
+    productImageUpload.single('productImage')(req, res, (err: any) => {
+      if (err) {
+        const msg = err.code === 'LIMIT_FILE_SIZE' ? 'Image too large (max 15 MB)' : (err.message || 'Image upload failed');
+        return res.status(400).json({ error: msg });
+      }
+      next();
+    });
+  },
+  async (req: Request, res: Response) => {
   try {
     const { uniqueId } = req.params;
     if (!req.file) {
@@ -137,12 +151,15 @@ router.post('/:uniqueId/upload-image', authenticateToken, productImageUpload.sin
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
-    // Resize to max 800×800, convert to WebP at 80% quality before storing
+    // Shrink before storing: cap at 600×600 (aspect preserved, never upscaled)
+    // and re-encode as WebP q70 to keep the stored/served file small.
     const resizedBuffer = await sharp(req.file.buffer)
-      .resize({ width: 800, height: 800, fit: 'inside', withoutEnlargement: true })
-      .webp({ quality: 80 })
+      .rotate() // honour EXIF orientation so phone photos aren't sideways
+      .resize({ width: 600, height: 600, fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 70 })
       .toBuffer();
 
+    console.log(`[upload-image] ${uniqueId}: ${req.file.size} bytes → ${resizedBuffer.length} bytes`);
     const success = await updateProductImage(uniqueId, resizedBuffer);
     if (!success) {
       return res.status(500).json({ error: 'Failed to save image' });
