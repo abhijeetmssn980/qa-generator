@@ -172,6 +172,9 @@ export interface Product {
   hazardSymbol?: string;
   hazardId?: number;
   productImage?: string;
+  leafletUrl?: string;
+  hasOwnImage?: boolean;
+  hasOwnLeaflet?: boolean;
   companyId?: number;
   companyName?: string;
   is_master?: boolean;
@@ -233,6 +236,32 @@ export async function apiUploadProductImage(uniqueId: string, file: File): Promi
     throw new Error(data.error || 'Image upload failed');
   }
   return data;
+}
+
+export async function apiUploadProductLeaflet(uniqueId: string, file: File): Promise<{ message: string; leafletUrl: string }> {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append('leaflet', file);
+
+  const res = await fetch(`${API_BASE}/products/${uniqueId}/upload-leaflet`, {
+    method: 'POST',
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    body: formData,
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Leaflet upload failed');
+  }
+  return data;
+}
+
+export async function apiDeleteProductImage(uniqueId: string): Promise<void> {
+  await request(`/products/${uniqueId}/image`, { method: 'DELETE' });
+}
+
+export async function apiDeleteProductLeaflet(uniqueId: string): Promise<void> {
+  await request(`/products/${uniqueId}/leaflet`, { method: 'DELETE' });
 }
 
 export async function apiGetTrashProducts(): Promise<Product[]> {

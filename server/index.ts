@@ -221,6 +221,7 @@ async function initDB() {
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS is_master BOOLEAN DEFAULT false');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS quantity VARCHAR(100)');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS product_image BYTEA');
+    await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS leaflet BYTEA');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url VARCHAR(500)');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS hazard_symbol VARCHAR(255)');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS hazard_id INTEGER');

@@ -256,7 +256,19 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
 
           <div className="view-info-group">
             <label>LEAFLETS INFORMATION</label>
-            <p><a href="#">CLICK TO VIEW INFORMATION</a></p>
+            {product.leafletUrl ? (
+              <p>
+                <a
+                  href={`${API_BASE.replace('/api', '')}${product.leafletUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  CLICK TO VIEW INFORMATION
+                </a>
+              </p>
+            ) : (
+              <p style={{ color: '#94a3b8' }}>Not available</p>
+            )}
           </div>
         </div>
       </div>

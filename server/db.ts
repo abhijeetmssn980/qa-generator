@@ -33,7 +33,10 @@ export interface Product {
   imageUrl?: string;
   hazardSymbol?: string; // e.g. '☠️ Toxic', '🔥 Flammable'
   hazardId?: number;
-  productImage?: string; // URL path to serve the image
+  productImage?: string; // effective image URL — the product's own, else inherited from its master
+  leafletUrl?: string; // effective leaflet URL — the product's own, else inherited from its master
+  hasOwnImage?: boolean; // true when this product has its own image (not inherited from master)
+  hasOwnLeaflet?: boolean; // true when this product has its own leaflet (not inherited from master)
   owner_uid?: string;
   active?: string; // 'Y' or 'N'
   companyId?: number;
@@ -58,7 +61,27 @@ export interface User {
 }
 
 // ── Helper: map a DB row to Product ──
+// Image/leaflet resolution: use the product's own asset when present, otherwise
+// fall back to its master product's asset (master info comes from the LEFT JOIN
+// aliased `m` — master_unique_id / master_has_image / master_has_leaflet).
 function rowToProduct(row: any): Product {
+  const ownImage = !!row.product_image;
+  const ownLeaflet = !!row.leaflet;
+  const masterUid = row.master_unique_id;
+  const canInherit = !row.is_master && !!masterUid;
+
+  const productImage = ownImage
+    ? `/api/products/${row.unique_id}/image`
+    : canInherit && row.master_has_image
+      ? `/api/products/${masterUid}/image`
+      : undefined;
+
+  const leafletUrl = ownLeaflet
+    ? `/api/products/${row.unique_id}/leaflet`
+    : canInherit && row.master_has_leaflet
+      ? `/api/products/${masterUid}/leaflet`
+      : undefined;
+
   return {
     id: row.id,
     uniqueId: row.unique_id,
@@ -77,7 +100,10 @@ function rowToProduct(row: any): Product {
     // hazard_name comes from LEFT JOIN hazards — falls back to legacy hazard_symbol text
     hazardSymbol: row.hazard_name ?? row.hazard_symbol,
     hazardId: row.hazard_id ?? undefined,
-    productImage: row.product_image ? `/api/products/${row.unique_id}/image` : undefined,
+    productImage,
+    leafletUrl,
+    hasOwnImage: ownImage,
+    hasOwnLeaflet: ownLeaflet,
     owner_uid: row.owner_uid,
     active: row.active || 'Y',
     is_master: row.is_master ?? false,
@@ -95,9 +121,14 @@ export async function getProducts(companyId?: number, isAdmin?: boolean): Promis
     : '(p.is_master = false OR p.is_master IS NULL)';
   if (companyId) {
     const { rows } = await pool.query(
-      `SELECT p.*, c.name as company_name, h.name as hazard_name FROM products p
+      `SELECT p.*, c.name as company_name, h.name as hazard_name,
+              m.unique_id AS master_unique_id,
+              (m.product_image IS NOT NULL) AS master_has_image,
+              (m.leaflet IS NOT NULL) AS master_has_leaflet
+       FROM products p
        LEFT JOIN companies c ON p.company_id = c.id
        LEFT JOIN hazards h ON h.id = p.hazard_id
+       LEFT JOIN products m ON m.is_master = true AND m.name = p.name AND m.company_id = p.company_id AND m.id <> p.id
        WHERE p.active = 'Y' AND ${masterFilter} AND p.company_id = $1
        ORDER BY p.created_date DESC`,
       [companyId]
@@ -105,9 +136,14 @@ export async function getProducts(companyId?: number, isAdmin?: boolean): Promis
     return rows.map(rowToProduct);
   }
   const { rows } = await pool.query(
-    `SELECT p.*, c.name as company_name, h.name as hazard_name FROM products p
+    `SELECT p.*, c.name as company_name, h.name as hazard_name,
+            m.unique_id AS master_unique_id,
+            (m.product_image IS NOT NULL) AS master_has_image,
+            (m.leaflet IS NOT NULL) AS master_has_leaflet
+     FROM products p
      LEFT JOIN companies c ON p.company_id = c.id
      LEFT JOIN hazards h ON h.id = p.hazard_id
+     LEFT JOIN products m ON m.is_master = true AND m.name = p.name AND m.company_id = p.company_id AND m.id <> p.id
      WHERE p.active = 'Y' AND ${masterFilter}
      ORDER BY p.created_date DESC`
   );
@@ -159,6 +195,9 @@ export async function getProductByUniqueId(uniqueId: string): Promise<Product | 
     `SELECT p.*,
        c.name as company_name,
        h.name as hazard_name,
+       m.unique_id AS master_unique_id,
+       (m.product_image IS NOT NULL) AS master_has_image,
+       (m.leaflet IS NOT NULL) AS master_has_leaflet,
        COALESCE(NULLIF(TRIM(p.manufacturer_licence), ''), m.manufacturer_licence) as manufacturer_licence,
        COALESCE(NULLIF(TRIM(p.technical_name), ''), m.technical_name) as technical_name,
        COALESCE(NULLIF(TRIM(p.registration_number), ''), m.registration_number) as registration_number,
@@ -168,7 +207,7 @@ export async function getProductByUniqueId(uniqueId: string): Promise<Product | 
      FROM products p
      LEFT JOIN companies c ON p.company_id = c.id
      LEFT JOIN hazards h ON h.id = p.hazard_id
-     LEFT JOIN products m ON m.is_master = true AND m.name = p.name AND m.company_id = p.company_id
+     LEFT JOIN products m ON m.is_master = true AND m.name = p.name AND m.company_id = p.company_id AND m.id <> p.id
      WHERE p.unique_id = $1`,
     [uniqueId]
   );
@@ -232,18 +271,8 @@ export async function addProduct(product: Product & { is_master?: boolean }): Pr
   );
   const saved = rowToProduct(rows[0]);
 
-  // If non-master product, copy image from its master product (same name + same company)
-  if (!product.is_master && product.companyId) {
-    await pool.query(
-      `UPDATE products p
-       SET product_image = m.product_image
-       FROM products m
-       WHERE m.is_master = true AND m.product_image IS NOT NULL
-         AND m.name = p.name AND m.company_id = p.company_id
-         AND p.unique_id = $1 AND p.product_image IS NULL`,
-      [product.uniqueId]
-    );
-  }
+  // A newly created child inherits its master's image/leaflet at read time
+  // (see rowToProduct), so nothing needs to be copied onto the child here.
 
   return saved;
 }
@@ -590,33 +619,55 @@ export async function addUser(user: User): Promise<User> {
 }
 
 // ── Product Image ──
+// Stores the image only on this product. Children with no own image inherit the
+// master's image at read time (see rowToProduct), so no physical cascade is needed.
 export async function updateProductImage(uniqueId: string, imageBuffer: Buffer): Promise<boolean> {
   const result = await pool.query(
     'UPDATE products SET product_image = $1 WHERE unique_id = $2',
     [imageBuffer, uniqueId]
   );
-  if ((result.rowCount ?? 0) === 0) return false;
-
-  // If this is a master product, propagate image to all non-master products
-  // with the same name and same company_id
-  const { rows } = await pool.query(
-    'SELECT name, company_id, is_master FROM products WHERE unique_id = $1',
-    [uniqueId]
-  );
-  if (rows.length > 0 && rows[0].is_master && rows[0].company_id) {
-    await pool.query(
-      `UPDATE products SET product_image = $1
-       WHERE name = $2 AND company_id = $3 AND (is_master = false OR is_master IS NULL) AND active = 'Y'`,
-      [imageBuffer, rows[0].name, rows[0].company_id]
-    );
-  }
-  return true;
+  return (result.rowCount ?? 0) > 0;
 }
 
 export async function getProductImage(uniqueId: string): Promise<Buffer | null> {
   const { rows } = await pool.query('SELECT product_image FROM products WHERE unique_id = $1', [uniqueId]);
   if (rows.length === 0 || !rows[0].product_image) return null;
   return rows[0].product_image;
+}
+
+// Clears this product's own image. A child then falls back to its master's image at read time.
+export async function deleteProductImage(uniqueId: string): Promise<boolean> {
+  const result = await pool.query(
+    'UPDATE products SET product_image = NULL WHERE unique_id = $1',
+    [uniqueId]
+  );
+  return (result.rowCount ?? 0) > 0;
+}
+
+// ── Product Leaflet (PDF) ──
+// Stores the leaflet only on this product. Children with no own leaflet inherit the
+// master's leaflet at read time (see rowToProduct), so no physical cascade is needed.
+export async function updateProductLeaflet(uniqueId: string, leafletBuffer: Buffer): Promise<boolean> {
+  const result = await pool.query(
+    'UPDATE products SET leaflet = $1 WHERE unique_id = $2',
+    [leafletBuffer, uniqueId]
+  );
+  return (result.rowCount ?? 0) > 0;
+}
+
+export async function getProductLeaflet(uniqueId: string): Promise<Buffer | null> {
+  const { rows } = await pool.query('SELECT leaflet FROM products WHERE unique_id = $1', [uniqueId]);
+  if (rows.length === 0 || !rows[0].leaflet) return null;
+  return rows[0].leaflet;
+}
+
+// Clears this product's own leaflet. A child then falls back to its master's leaflet at read time.
+export async function deleteProductLeaflet(uniqueId: string): Promise<boolean> {
+  const result = await pool.query(
+    'UPDATE products SET leaflet = NULL WHERE unique_id = $1',
+    [uniqueId]
+  );
+  return (result.rowCount ?? 0) > 0;
 }
 
 // ── Hazards ──

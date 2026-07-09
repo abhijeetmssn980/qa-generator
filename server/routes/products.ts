@@ -16,6 +16,10 @@ import {
   getMasterProducts,
   updateProductImage,
   getProductImage,
+  deleteProductImage,
+  updateProductLeaflet,
+  getProductLeaflet,
+  deleteProductLeaflet,
   generateUniqueId,
   logScanEvent,
   getScanAnalytics,
@@ -43,6 +47,19 @@ const productImageUpload = multer({
     const ext = path.extname(file.originalname).toLowerCase();
     if (allowed.includes(ext)) cb(null, true);
     else cb(new Error('Only image files are allowed (png, jpg, jpeg, webp)'));
+  },
+});
+
+// Multer for product leaflet upload — PDF only (10MB limit)
+const leafletUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const isPdf =
+      path.extname(file.originalname).toLowerCase() === '.pdf' ||
+      file.mimetype === 'application/pdf';
+    if (isPdf) cb(null, true);
+    else cb(new Error('Only PDF files are allowed for leaflets'));
   },
 });
 
@@ -170,6 +187,87 @@ router.get('/:uniqueId/image', async (req: Request, res: Response) => {
   } catch (err) {
     console.error('Get product image error:', err);
     return res.status(500).json({ error: 'Failed to fetch image' });
+  }
+});
+
+// DELETE /api/products/:uniqueId/image — remove product image (admin or editor only)
+router.delete('/:uniqueId/image', authenticateToken, requireRole('admin', 'editor'), async (req: Request, res: Response) => {
+  try {
+    const deleted = await deleteProductImage(req.params.uniqueId as string);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    return res.json({ message: 'Product image removed' });
+  } catch (err) {
+    console.error('Delete product image error:', err);
+    return res.status(500).json({ error: 'Failed to remove product image' });
+  }
+});
+
+// POST /api/products/:uniqueId/upload-leaflet — upload leaflet PDF (admin or editor only)
+router.post(
+  '/:uniqueId/upload-leaflet',
+  authenticateToken,
+  requireRole('admin', 'editor'),
+  (req: Request, res: Response, next: NextFunction) => {
+    // Wrap multer so validation errors (wrong type / too large) return JSON, not an HTML 500
+    leafletUpload.single('leaflet')(req, res, (err: any) => {
+      if (err) return res.status(400).json({ error: err.message || 'Leaflet upload failed' });
+      next();
+    });
+  },
+  async (req: Request, res: Response) => {
+    try {
+      const uniqueId = req.params.uniqueId as string;
+      if (!req.file) {
+        return res.status(400).json({ error: 'No leaflet file uploaded' });
+      }
+      const product = await getProductByUniqueId(uniqueId);
+      if (!product) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+      const success = await updateProductLeaflet(uniqueId, req.file.buffer);
+      if (!success) {
+        return res.status(500).json({ error: 'Failed to save leaflet' });
+      }
+      return res.json({ message: 'Leaflet uploaded successfully', leafletUrl: `/api/products/${uniqueId}/leaflet` });
+    } catch (err) {
+      console.error('Upload leaflet error:', err);
+      return res.status(500).json({ error: 'Failed to upload leaflet' });
+    }
+  }
+);
+
+// DELETE /api/products/:uniqueId/leaflet — remove leaflet PDF (admin or editor only)
+router.delete('/:uniqueId/leaflet', authenticateToken, requireRole('admin', 'editor'), async (req: Request, res: Response) => {
+  try {
+    const deleted = await deleteProductLeaflet(req.params.uniqueId as string);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    return res.json({ message: 'Leaflet removed' });
+  } catch (err) {
+    console.error('Delete leaflet error:', err);
+    return res.status(500).json({ error: 'Failed to remove leaflet' });
+  }
+});
+
+// GET /api/products/:uniqueId/leaflet — serve leaflet PDF (public)
+router.get('/:uniqueId/leaflet', async (req: Request, res: Response) => {
+  try {
+    const uniqueId = req.params.uniqueId as string;
+    const leafletBuffer = await getProductLeaflet(uniqueId);
+    if (!leafletBuffer) {
+      return res.status(404).json({ error: 'No leaflet found' });
+    }
+    res.set('Content-Type', 'application/pdf');
+    // inline → browsers open it in the PDF viewer / new tab; mobile devices download it
+    res.set('Content-Disposition', `inline; filename="leaflet-${uniqueId}.pdf"`);
+    res.set('Cache-Control', 'public, max-age=86400');
+    return res.send(leafletBuffer);
+  } catch (err) {
+    console.error('Get leaflet error:', err);
+    return res.status(500).json({ error: 'Failed to fetch leaflet' });
   }
 });
 
