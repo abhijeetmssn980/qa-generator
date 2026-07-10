@@ -6,6 +6,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import SearchableSelect from '../components/SearchableSelect';
 import { formatByPrecision, parseDateStr, type DatePrecision } from '../utils/dates';
+import { assetUrl } from '../utils/assetUrl';
 
 type AddProductProps = {
   onProductAdded?: (product: any) => Promise<any>;
@@ -35,6 +36,8 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList,
   });
   const [productImageFile, setProductImageFile] = useState<File | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  // Photo + leaflet inherited from the selected parent (master) product — shown for reference.
+  const [masterAssets, setMasterAssets] = useState<{ image?: string; leaflet?: string }>({});
   const [addedProduct, setAddedProduct] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
   const [datePrecision, setDatePrecision] = useState<DatePrecision>('month');
@@ -77,11 +80,13 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList,
 
     if (!masterId) {
       setForm({ name: '', batch: '', manufacturer: '', expiry: '', manufacturerName: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '', packingSize: '', marketedBy: '' });
+      setMasterAssets({});
       return;
     }
 
     const master = masterProducts.find(p => p.uniqueId === masterId);
     if (master) {
+      setMasterAssets({ image: master.productImage, leaflet: master.leafletUrl });
       setForm({
         name: master.name || '',
         batch: '',
@@ -143,6 +148,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList,
         // Clear form only after confirmed successful save
         setAddedProduct(saved ?? product);
         setSelectedMasterId('');
+        setMasterAssets({});
         setProductImageFile(null);
         if (imageInputRef.current) imageInputRef.current.value = '';
         setForm({ name: '', batch: '', manufacturer: '', expiry: '', manufacturerName: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '', packingSize: '', marketedBy: '' });
@@ -215,6 +221,34 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList,
                     </tr>}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Product photo + leaflet (inherited from the selected product) */}
+              <div className="form-step">
+                <div className="form-step-header">
+                  <span className="step-title">Product Photo &amp; Leaflet</span>
+                </div>
+                <div style={{ display: 'flex', gap: '24px', alignItems: 'center', flexWrap: 'wrap', padding: '4px' }}>
+                  {masterAssets.image ? (
+                    <img
+                      src={assetUrl(masterAssets.image, { small: true })}
+                      alt={form.name}
+                      style={{ maxWidth: '140px', maxHeight: '140px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafb' }}
+                    />
+                  ) : (
+                    <span style={{ color: '#94a3b8', fontSize: '13px' }}>No photo for this product</span>
+                  )}
+                  {masterAssets.leaflet ? (
+                    <a href={assetUrl(masterAssets.leaflet)} target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', fontWeight: 600, fontSize: '14px' }}>
+                      📄 View leaflet
+                    </a>
+                  ) : (
+                    <span style={{ color: '#94a3b8', fontSize: '13px' }}>No leaflet for this product</span>
+                  )}
+                </div>
+                <p style={{ fontSize: '12px', color: '#64748b', margin: '6px 4px 0' }}>
+                  This batch will use the product's photo and leaflet. You can set a batch-specific one later by editing the product.
+                </p>
               </div>
 
               {/* Step 2: Batch Details */}
