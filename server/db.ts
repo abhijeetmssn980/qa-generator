@@ -623,6 +623,14 @@ export async function addUser(user: User): Promise<User> {
   return user;
 }
 
+export async function updateUserPassword(uid: string, hashedPassword: string): Promise<boolean> {
+  const result = await pool.query(
+    `UPDATE users SET password = $1, updated_date = NOW() AT TIME ZONE 'Asia/Kolkata' WHERE uid = $2`,
+    [hashedPassword, uid]
+  );
+  return (result.rowCount ?? 0) > 0;
+}
+
 // ── Product Image ──
 // Like the leaflet: both backends funnel through product_image_url (the single
 // source the read path uses). A child with none inherits its master's at read time.

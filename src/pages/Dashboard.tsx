@@ -13,6 +13,7 @@ import Trash from './Trash';
 import ScanAnalytics from './ScanAnalytics';
 import Logo from '../components/Logo';
 import Spinner from '../components/Spinner';
+import ChangePasswordModal from '../components/ChangePasswordModal';
 import { apiGetProducts, apiAddProduct, apiUpdateProduct, apiDeleteProduct, apiUploadProductImage, apiExportDatabase, apiGetCompanyById } from '../services/api';
 import type { Product } from '../services/api';
 import type { UserRole } from '../services/api';
@@ -38,6 +39,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [showLogoutMenu, setShowLogoutMenu] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [exportingDb, setExportingDb] = useState(false);
@@ -450,6 +452,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                     <button
                       onClick={() => {
                         setShowLogoutMenu(false);
+                        setShowChangePassword(true);
+                      }}
+                      className="menu-item"
+                    >
+                      🔑 Change Password
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowLogoutMenu(false);
                         onLogout();
                       }}
                       className="menu-item logout-btn"
@@ -464,6 +475,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         </header>
         <section className="dashboard-main">{renderPage()}</section>
       </main>
+      {showChangePassword && <ChangePasswordModal onClose={() => setShowChangePassword(false)} />}
     </div>
   );
 };

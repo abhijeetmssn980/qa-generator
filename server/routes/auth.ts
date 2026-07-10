@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
 import path from 'path';
-import { findUserByEmail, addUser, getCompanyById, updateCompanyLogo, incrementFailedAttempts, lockUser, resetFailedAttempts } from '../db';
+import { findUserByEmail, addUser, updateUserPassword, getCompanyById, updateCompanyLogo, incrementFailedAttempts, lockUser, resetFailedAttempts } from '../db';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'qa-generator-secret-key-2026';
@@ -241,6 +241,53 @@ router.get('/me', async (req, res) => {
     });
   } catch {
     return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+});
+
+// POST /api/auth/change-password — change own password (requires current password)
+router.post('/change-password', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    let decoded: { uid: string; email: string };
+    try {
+      decoded = jwt.verify(authHeader.split(' ')[1], JWT_SECRET) as { uid: string; email: string };
+    } catch {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+
+    const { currentPassword, newPassword } = req.body || {};
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current and new password are required' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters' });
+    }
+
+    const user = await findUserByEmail(decoded.email);
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+    if (await bcrypt.compare(newPassword, user.password)) {
+      return res.status(400).json({ error: 'New password must be different from the current password' });
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    const ok = await updateUserPassword(user.uid, hashed);
+    if (!ok) {
+      return res.status(500).json({ error: 'Failed to update password' });
+    }
+    return res.json({ message: 'Password changed successfully' });
+  } catch (err) {
+    console.error('Change password error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
