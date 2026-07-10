@@ -404,8 +404,8 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
                   />
                   <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', marginBottom: 0 }}>
                     {leafletExists
-                      ? 'Choose a PDF to replace the current leaflet, or remove it. Max 10 MB.'
-                      : 'Upload a PDF leaflet (max 10 MB). Shown to customers via the “Leaflets Information” link.'}
+                      ? 'Choose a PDF to replace the current leaflet, or remove it. Max 25 MB.'
+                      : 'Upload a PDF leaflet (max 25 MB). Shown to customers via the “Leaflets Information” link.'}
                   </p>
                 </div>
           </div>

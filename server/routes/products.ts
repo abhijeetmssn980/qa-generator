@@ -54,10 +54,10 @@ const productImageUpload = multer({
   },
 });
 
-// Multer for product leaflet upload — PDF only (10MB limit)
+// Multer for product leaflet upload — PDF only (25MB limit)
 const leafletUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 25 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const isPdf =
       path.extname(file.originalname).toLowerCase() === '.pdf' ||
@@ -245,7 +245,10 @@ router.post(
   (req: Request, res: Response, next: NextFunction) => {
     // Wrap multer so validation errors (wrong type / too large) return JSON, not an HTML 500
     leafletUpload.single('leaflet')(req, res, (err: any) => {
-      if (err) return res.status(400).json({ error: err.message || 'Leaflet upload failed' });
+      if (err) {
+        const msg = err.code === 'LIMIT_FILE_SIZE' ? 'Leaflet too large (max 25 MB)' : (err.message || 'Leaflet upload failed');
+        return res.status(400).json({ error: msg });
+      }
       next();
     });
   },
