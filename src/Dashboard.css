@@ -653,6 +653,63 @@
   word-break: break-word;
 }
 
+/* ── Companies & subscriptions table (admin dashboard) ── */
+.companies-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.companies-table th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #64748b;
+  border-bottom: 2px solid #e2e8f0;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.companies-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+}
+.companies-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.companies-table tbody tr:hover {
+  background: #f8fafc;
+}
+.sub-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.renew-btn {
+  padding: 5px 14px;
+  border-radius: 6px;
+  border: 1px solid #2563eb;
+  background: #fff;
+  color: #2563eb;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.renew-btn:hover:not(:disabled) {
+  background: #2563eb;
+  color: #fff;
+}
+.renew-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 /* ── Change Password modal ── */
 .cp-overlay {
   position: fixed;

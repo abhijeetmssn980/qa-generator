@@ -14,8 +14,8 @@ import ScanAnalytics from './ScanAnalytics';
 import Logo from '../components/Logo';
 import Spinner from '../components/Spinner';
 import ChangePasswordModal from '../components/ChangePasswordModal';
-import { apiGetProducts, apiAddProduct, apiUpdateProduct, apiDeleteProduct, apiUploadProductImage, apiExportDatabase, apiGetCompanyById } from '../services/api';
-import type { Product } from '../services/api';
+import { apiGetProducts, apiAddProduct, apiUpdateProduct, apiDeleteProduct, apiUploadProductImage, apiExportDatabase, apiGetCompanyById, apiGetAllCompanies, apiRenewSubscription } from '../services/api';
+import type { Product, Company } from '../services/api';
 import type { UserRole } from '../services/api';
 
 type Page = 'dashboard' | 'add' | 'edit' | 'list' | 'trash' | 'view' | 'users' | 'bulk-upload' | 'create-company' | 'edit-company' | 'hazards' | 'scan-analytics';
@@ -47,6 +47,30 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [scanAnalyticsEnabled, setScanAnalyticsEnabled] = useState<boolean>(false);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(false);
+  const [renewingId, setRenewingId] = useState<number | null>(null);
+
+  const sortByExpiry = (list: Company[]) =>
+    [...list].sort((a, b) => {
+      const ta = a.subscriptionExpiresAt ? new Date(a.subscriptionExpiresAt).getTime() : Infinity;
+      const tb = b.subscriptionExpiresAt ? new Date(b.subscriptionExpiresAt).getTime() : Infinity;
+      return ta - tb;
+    });
+
+  const handleRenew = async (c: Company) => {
+    if (!c.id) return;
+    if (!window.confirm(`Renew subscription for "${c.name}" by 30 days?`)) return;
+    setRenewingId(c.id);
+    try {
+      const updated = await apiRenewSubscription(c.id);
+      setCompanies(prev => sortByExpiry(prev.map(x => x.id === c.id ? { ...x, subscriptionExpiresAt: updated.subscriptionExpiresAt } : x)));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to renew subscription');
+    } finally {
+      setRenewingId(null);
+    }
+  };
 
   useEffect(() => {
     if (user.companyId) {
@@ -64,6 +88,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     const diff = new Date(expiresAt).getTime() - Date.now();
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   };
+
+  // Admins see all companies + their subscription expiry on the dashboard
+  useEffect(() => {
+    if (user.role !== 'admin') return;
+    setLoadingCompanies(true);
+    apiGetAllCompanies()
+      .then(list => setCompanies(sortByExpiry(list))) // soonest to expire first
+      .catch(console.error)
+      .finally(() => setLoadingCompanies(false));
+  }, [user.role]);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -236,6 +270,49 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                 </div>
               </div>
             </div>
+            {user.role === 'admin' && (
+              <div className="card" style={{ alignItems: 'stretch', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ fontWeight: 700, color: '#1e3a8a', fontSize: '1rem' }}>🏢 Companies &amp; Subscriptions</div>
+                {loadingCompanies ? (
+                  <Spinner size="small" />
+                ) : companies.length === 0 ? (
+                  <p style={{ margin: 0, fontSize: '0.88rem', color: '#64748b' }}>No companies found.</p>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className="companies-table">
+                      <thead>
+                        <tr><th>Company</th><th>Subscription Expiry</th><th>Status</th><th></th></tr>
+                      </thead>
+                      <tbody>
+                        {companies.map(c => {
+                          const days = getDaysRemaining(c.subscriptionExpiresAt || null);
+                          const color = days <= 0 ? '#dc2626' : days <= 5 ? '#ea580c' : days <= 10 ? '#d97706' : '#16a34a';
+                          const bg = days <= 0 ? '#fef2f2' : days <= 5 ? '#fff7ed' : days <= 10 ? '#fffbeb' : '#f0fdf4';
+                          const label = !c.subscriptionExpiresAt ? '—' : days <= 0 ? 'Expired' : `${days}d left`;
+                          return (
+                            <tr key={c.id}>
+                              <td style={{ fontWeight: 600 }}>{c.name}</td>
+                              <td>{c.subscriptionExpiresAt ? new Date(c.subscriptionExpiresAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</td>
+                              <td><span className="sub-badge" style={{ color, background: bg, border: `1px solid ${color}33` }}>{label}</span></td>
+                              <td style={{ textAlign: 'right' }}>
+                                <button
+                                  type="button"
+                                  className="renew-btn"
+                                  onClick={() => handleRenew(c)}
+                                  disabled={renewingId === c.id}
+                                >
+                                  {renewingId === c.id ? 'Renewing…' : 'Renew'}
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
             {user.role === 'admin' && (
               <div className="card" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ fontWeight: 700, color: '#1e3a8a', fontSize: '1rem' }}>🗄️ Database Export</div>
