@@ -224,31 +224,25 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList,
               </div>
 
               {/* Product photo + leaflet (inherited from the selected product) */}
-              <div className="form-step">
-                <div className="form-step-header">
-                  <span className="step-title">Product Photo &amp; Leaflet</span>
-                </div>
-                <div style={{ display: 'flex', gap: '24px', alignItems: 'center', flexWrap: 'wrap', padding: '4px' }}>
-                  {masterAssets.image ? (
-                    <img
-                      src={assetUrl(masterAssets.image, { small: true })}
-                      alt={form.name}
-                      style={{ maxWidth: '140px', maxHeight: '140px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafb' }}
-                    />
-                  ) : (
-                    <span style={{ color: '#94a3b8', fontSize: '13px' }}>No photo for this product</span>
-                  )}
+              <div className="product-media-bar">
+                {masterAssets.image ? (
+                  <img className="product-media-photo" src={assetUrl(masterAssets.image, { small: true })} alt={form.name} />
+                ) : (
+                  <div className="product-media-photo is-empty">No photo</div>
+                )}
+                <div className="product-media-info">
+                  <span className="product-media-label">Product Photo &amp; Leaflet</span>
                   {masterAssets.leaflet ? (
-                    <a href={assetUrl(masterAssets.leaflet)} target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', fontWeight: 600, fontSize: '14px' }}>
-                      📄 View leaflet
+                    <a className="leaflet-pill" href={assetUrl(masterAssets.leaflet)} target="_blank" rel="noopener noreferrer">
+                      <span aria-hidden="true">📄</span> View Leaflet
                     </a>
                   ) : (
-                    <span style={{ color: '#94a3b8', fontSize: '13px' }}>No leaflet for this product</span>
+                    <span className="leaflet-pill is-empty"><span aria-hidden="true">📄</span> No leaflet</span>
                   )}
+                  <p className="product-media-hint">
+                    This batch inherits the product's photo &amp; leaflet — set a batch-specific one later by editing the product.
+                  </p>
                 </div>
-                <p style={{ fontSize: '12px', color: '#64748b', margin: '6px 4px 0' }}>
-                  This batch will use the product's photo and leaflet. You can set a batch-specific one later by editing the product.
-                </p>
               </div>
 
               {/* Step 2: Batch Details */}
