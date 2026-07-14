@@ -218,7 +218,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       case 'edit-company':
         return user.role === 'admin' ? (
           <EditCompany companyId={user.companyId} isAdmin={true} onSaved={() => {}} />
-        ) : <div className="page-placeholder">Only admins can edit company details.</div>;
+        ) : user.role === 'editor' && user.companyId ? (
+          <EditCompany companyId={user.companyId} isAdmin={false} onSaved={() => {}} />
+        ) : <div className="page-placeholder">You don't have permission to edit company details.</div>;
       case 'hazards':
         return <ManageHazards />;
       case 'scan-analytics':
@@ -412,6 +414,20 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
             >
               <span className="nav-icon">🗑️</span>
               Trash
+            </a>
+          )}
+          {user.role === 'editor' && user.companyId && (
+            <a
+              href="#"
+              className={page === 'edit-company' ? 'active' : ''}
+              onClick={(e) => {
+                e.preventDefault();
+                setPage('edit-company');
+                setSidebarOpen(false);
+              }}
+            >
+              <span className="nav-icon">✏️</span>
+              Edit Company
             </a>
           )}
           {user.role === 'admin' && (

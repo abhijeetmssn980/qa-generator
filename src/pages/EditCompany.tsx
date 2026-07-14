@@ -13,7 +13,7 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }) => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(companyId || null);
-  const [formData, setFormData] = useState<Company>({ name: '', address: '', phone: '', email: '', website: '', scanAnalyticsEnabled: true });
+  const [formData, setFormData] = useState<Company>({ name: '', address: '', phone: '', email: '', website: '', facebookUrl: '', instagramUrl: '', scanAnalyticsEnabled: true });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [currentLogoUrl, setCurrentLogoUrl] = useState<string | null>(null);
@@ -46,7 +46,7 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
 
     apiGetCompanyById(selectedCompanyId)
       .then(async company => {
-        setFormData({ name: company.name || '', address: company.address || '', phone: company.phone || '', email: company.email || '', website: company.website || '', scanAnalyticsEnabled: company.scanAnalyticsEnabled !== false });
+        setFormData({ name: company.name || '', address: company.address || '', phone: company.phone || '', email: company.email || '', website: company.website || '', facebookUrl: company.facebookUrl || '', instagramUrl: company.instagramUrl || '', scanAnalyticsEnabled: company.scanAnalyticsEnabled !== false });
         setSubscriptionExpiresAt(company.subscriptionExpiresAt || null);
         const logoUrl = `${API_BASE}/companies/${selectedCompanyId}/logo`;
         const res = await fetch(logoUrl);
@@ -84,7 +84,7 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
     if (!formData.name?.trim()) { setError('Company name is required.'); return; }
     setSaving(true);
     try {
-      await apiUpdateCompany(selectedCompanyId, { name: formData.name, address: formData.address, phone: formData.phone, email: formData.email, website: formData.website, scanAnalyticsEnabled: formData.scanAnalyticsEnabled });
+      await apiUpdateCompany(selectedCompanyId, { name: formData.name, address: formData.address, phone: formData.phone, email: formData.email, website: formData.website, facebookUrl: formData.facebookUrl, instagramUrl: formData.instagramUrl, scanAnalyticsEnabled: formData.scanAnalyticsEnabled });
       if (logoFile) {
         await apiUploadLogo(logoFile, selectedCompanyId);
         setCurrentLogoUrl(`${API_BASE}/companies/${selectedCompanyId}/logo?t=` + Date.now());
@@ -186,6 +186,16 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
                     <input name="website" type="text" value={formData.website || ''} onChange={handleChange} placeholder="www.example.com" />
                   </div>
                 </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>FACEBOOK LINK</label>
+                    <input name="facebookUrl" type="text" value={formData.facebookUrl || ''} onChange={handleChange} placeholder="https://facebook.com/yourpage" />
+                  </div>
+                  <div className="form-group">
+                    <label>INSTAGRAM LINK</label>
+                    <input name="instagramUrl" type="text" value={formData.instagramUrl || ''} onChange={handleChange} placeholder="https://instagram.com/yourhandle" />
+                  </div>
+                </div>
 
                 {/* Maintenance / Subscription */}
                 <div className="form-row">
@@ -210,25 +220,27 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
                               Expires: {new Date(subscriptionExpiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                             </div>
                           )}
-                          <button
-                            type="button"
-                            disabled={renewing}
-                            onClick={async () => {
-                              if (!selectedCompanyId) return;
-                              setRenewing(true);
-                              try {
-                                const updated = await apiRenewSubscription(selectedCompanyId);
-                                setSubscriptionExpiresAt(updated.subscriptionExpiresAt || null);
-                              } catch {
-                                setError('Failed to renew subscription.');
-                              } finally {
-                                setRenewing(false);
-                              }
-                            }}
-                            style={{ padding: '8px 20px', borderRadius: '8px', border: 'none', background: '#3b82f6', color: '#fff', fontWeight: 600, fontSize: '0.88rem', cursor: renewing ? 'not-allowed' : 'pointer', opacity: renewing ? 0.7 : 1 }}
-                          >
-                            {renewing ? '⏳ Renewing...' : '🔄 Renew 30 Days'}
-                          </button>
+                          {isAdmin && (
+                            <button
+                              type="button"
+                              disabled={renewing}
+                              onClick={async () => {
+                                if (!selectedCompanyId) return;
+                                setRenewing(true);
+                                try {
+                                  const updated = await apiRenewSubscription(selectedCompanyId);
+                                  setSubscriptionExpiresAt(updated.subscriptionExpiresAt || null);
+                                } catch {
+                                  setError('Failed to renew subscription.');
+                                } finally {
+                                  setRenewing(false);
+                                }
+                              }}
+                              style={{ padding: '8px 20px', borderRadius: '8px', border: 'none', background: '#3b82f6', color: '#fff', fontWeight: 600, fontSize: '0.88rem', cursor: renewing ? 'not-allowed' : 'pointer', opacity: renewing ? 0.7 : 1 }}
+                            >
+                              {renewing ? '⏳ Renewing...' : '🔄 Renew 30 Days'}
+                            </button>
+                          )}
                         </div>
                       );
                     })()}

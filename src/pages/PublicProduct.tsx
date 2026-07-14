@@ -12,7 +12,7 @@ type PublicProductProps = {
 const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
   const [product, setProduct] = useState<Product | null>(null);
-  const [company, setCompany] = useState<{ id: number; name: string; phone?: string; email?: string; website?: string; address?: string; scanAnalyticsEnabled?: boolean; subscriptionExpiresAt?: string } | null>(null);
+  const [company, setCompany] = useState<{ id: number; name: string; phone?: string; email?: string; website?: string; address?: string; facebookUrl?: string; instagramUrl?: string; scanAnalyticsEnabled?: boolean; subscriptionExpiresAt?: string } | null>(null);
   const [subscriptionExpired, setSubscriptionExpired] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -243,10 +243,16 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
               {company?.phone && <p>📱 - <a href={`tel:${company.phone}`}>{company.phone}</a></p>}
               {company?.email && <p>✉️ - <a href={`mailto:${company.email}`}>{company.email}</a></p>}
               {company?.website && <p className="website-link">🌐 <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noopener noreferrer">{company.website}</a></p>}
-              <div className="social-links" style={{ display: 'flex', gap: '14px', marginTop: '12px' }}>
-                <a href="https://www.facebook.com/share/15dP3RRYwS/" target="_blank" rel="noopener noreferrer" className="fb-btn" style={{ padding: '12px 32px', borderRadius: '24px', color: '#fff', background: 'linear-gradient(135deg, #4a90d9, #1877f2)', textDecoration: 'none', fontWeight: 600, fontSize: '1rem' }}>Facebook</a>
-                <a href="https://www.instagram.com/aborizen?igsh=MWF6NWZlN3RhcWN2eA==" target="_blank" rel="noopener noreferrer" className="ig-btn" style={{ padding: '12px 32px', borderRadius: '24px', color: '#fff', background: 'linear-gradient(135deg, #f77737, #e1306c)', textDecoration: 'none', fontWeight: 600, fontSize: '1rem' }}>Instagram</a>
-              </div>
+              {(company?.facebookUrl || company?.instagramUrl) && (
+                <div className="social-links" style={{ display: 'flex', gap: '14px', marginTop: '12px' }}>
+                  {company?.facebookUrl && (
+                    <a href={company.facebookUrl.startsWith('http') ? company.facebookUrl : `https://${company.facebookUrl}`} target="_blank" rel="noopener noreferrer" className="fb-btn" style={{ padding: '12px 32px', borderRadius: '24px', color: '#fff', background: 'linear-gradient(135deg, #4a90d9, #1877f2)', textDecoration: 'none', fontWeight: 600, fontSize: '1rem' }}>Facebook</a>
+                  )}
+                  {company?.instagramUrl && (
+                    <a href={company.instagramUrl.startsWith('http') ? company.instagramUrl : `https://${company.instagramUrl}`} target="_blank" rel="noopener noreferrer" className="ig-btn" style={{ padding: '12px 32px', borderRadius: '24px', color: '#fff', background: 'linear-gradient(135deg, #f77737, #e1306c)', textDecoration: 'none', fontWeight: 600, fontSize: '1rem' }}>Instagram</a>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

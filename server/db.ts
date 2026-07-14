@@ -10,6 +10,8 @@ export interface Company {
   phone?: string;
   email?: string;
   website?: string;
+  facebookUrl?: string;
+  instagramUrl?: string;
   scanAnalyticsEnabled?: boolean;
   subscriptionExpiresAt?: string;
   createdAt?: string;
@@ -358,10 +360,10 @@ export async function permanentDeleteProduct(uniqueId: string): Promise<boolean>
 // ── Companies ──
 export async function addCompany(company: Company): Promise<Company> {
   const { rows } = await pool.query(
-    `INSERT INTO companies (name, logo, address, phone, email, website, scan_analytics_enabled, subscription_expires_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW() + INTERVAL '30 days')
-     RETURNING id, name, logo, address, phone, email, website, scan_analytics_enabled, subscription_expires_at, created_date`,
-    [company.name, company.logo || null, company.address || null, company.phone || null, company.email || null, company.website || null, company.scanAnalyticsEnabled !== false]
+    `INSERT INTO companies (name, logo, address, phone, email, website, scan_analytics_enabled, facebook_url, instagram_url, subscription_expires_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW() + INTERVAL '30 days')
+     RETURNING id, name, logo, address, phone, email, website, scan_analytics_enabled, facebook_url, instagram_url, subscription_expires_at, created_date`,
+    [company.name, company.logo || null, company.address || null, company.phone || null, company.email || null, company.website || null, company.scanAnalyticsEnabled !== false, company.facebookUrl || null, company.instagramUrl || null]
   );
   return {
     id: rows[0].id,
@@ -372,6 +374,8 @@ export async function addCompany(company: Company): Promise<Company> {
     email: rows[0].email,
     website: rows[0].website,
     scanAnalyticsEnabled: rows[0].scan_analytics_enabled,
+    facebookUrl: rows[0].facebook_url,
+    instagramUrl: rows[0].instagram_url,
     subscriptionExpiresAt: rows[0].subscription_expires_at,
     createdAt: rows[0].created_date,
   };
@@ -389,6 +393,8 @@ export async function getCompanyByName(name: string): Promise<Company | undefine
     email: rows[0].email,
     website: rows[0].website,
     scanAnalyticsEnabled: rows[0].scan_analytics_enabled,
+    facebookUrl: rows[0].facebook_url,
+    instagramUrl: rows[0].instagram_url,
     subscriptionExpiresAt: rows[0].subscription_expires_at,
     createdAt: rows[0].created_date,
   };
@@ -406,6 +412,8 @@ export async function getCompanyById(id: number): Promise<Company | undefined> {
     email: rows[0].email,
     website: rows[0].website,
     scanAnalyticsEnabled: rows[0].scan_analytics_enabled,
+    facebookUrl: rows[0].facebook_url,
+    instagramUrl: rows[0].instagram_url,
     subscriptionExpiresAt: rows[0].subscription_expires_at,
     createdAt: rows[0].created_date,
   };
@@ -422,6 +430,8 @@ export async function getAllCompanies(): Promise<Company[]> {
     email: row.email,
     website: row.website,
     scanAnalyticsEnabled: row.scan_analytics_enabled,
+    facebookUrl: row.facebook_url,
+    instagramUrl: row.instagram_url,
     subscriptionExpiresAt: row.subscription_expires_at,
     createdAt: row.created_date,
   }));
@@ -439,6 +449,8 @@ export async function updateCompany(id: number, updates: Partial<Company>): Prom
     phone: 'phone',
     email: 'email',
     website: 'website',
+    facebookUrl: 'facebook_url',
+    instagramUrl: 'instagram_url',
     scanAnalyticsEnabled: 'scan_analytics_enabled',
   };
 
@@ -469,6 +481,8 @@ export async function updateCompany(id: number, updates: Partial<Company>): Prom
     email: rows[0].email,
     website: rows[0].website,
     scanAnalyticsEnabled: rows[0].scan_analytics_enabled,
+    facebookUrl: rows[0].facebook_url,
+    instagramUrl: rows[0].instagram_url,
     subscriptionExpiresAt: rows[0].subscription_expires_at,
     createdAt: rows[0].created_date,
   };
@@ -492,6 +506,8 @@ export async function renewCompanySubscription(id: number): Promise<Company | nu
     email: rows[0].email,
     website: rows[0].website,
     scanAnalyticsEnabled: rows[0].scan_analytics_enabled,
+    facebookUrl: rows[0].facebook_url,
+    instagramUrl: rows[0].instagram_url,
     subscriptionExpiresAt: rows[0].subscription_expires_at,
     createdAt: rows[0].created_date,
   };

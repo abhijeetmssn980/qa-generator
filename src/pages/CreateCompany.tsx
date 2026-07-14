@@ -15,6 +15,8 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
     phone: '',
     email: '',
     website: '',
+    facebookUrl: '',
+    instagramUrl: '',
     scanAnalyticsEnabled: true,
   });
 
@@ -229,6 +231,36 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
             value={formData.website || ''}
             onChange={handleChange}
             placeholder="www.example.com"
+            disabled={loading}
+          />
+        </div>
+
+        {/* Facebook */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#374151' }}>
+            Facebook Link
+          </label>
+          <input
+            type="text"
+            name="facebookUrl"
+            value={formData.facebookUrl || ''}
+            onChange={handleChange}
+            placeholder="https://facebook.com/yourpage"
+            disabled={loading}
+          />
+        </div>
+
+        {/* Instagram */}
+        <div style={{ marginBottom: '28px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#374151' }}>
+            Instagram Link
+          </label>
+          <input
+            type="text"
+            name="instagramUrl"
+            value={formData.instagramUrl || ''}
+            onChange={handleChange}
+            placeholder="https://instagram.com/yourhandle"
             disabled={loading}
           />
         </div>

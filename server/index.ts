@@ -186,6 +186,9 @@ async function initDB() {
     await client.query(`
       ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMPTZ;
     `);
+    // Social links for the public product page
+    await client.query('ALTER TABLE companies ADD COLUMN IF NOT EXISTS facebook_url VARCHAR(500)');
+    await client.query('ALTER TABLE companies ADD COLUMN IF NOT EXISTS instagram_url VARCHAR(500)');
     // Backfill existing companies that have no expiry yet
     await client.query(`
       UPDATE companies SET subscription_expires_at = NOW() + INTERVAL '30 days'
