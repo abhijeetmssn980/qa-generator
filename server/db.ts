@@ -489,12 +489,21 @@ export async function updateCompany(id: number, updates: Partial<Company>): Prom
 }
 
 export async function renewCompanySubscription(id: number): Promise<Company | null> {
+  // Read current expiry so renewal stays anchored to its day-of-month.
+  const { rows: cur } = await pool.query('SELECT subscription_expires_at FROM companies WHERE id = $1', [id]);
+  if (cur.length === 0) return null;
+
+  // Advance by whole calendar months (keeping the same day) until it's in the future.
+  // e.g. expiry Jul 15 renewed on Jul 20 → Aug 15 (a monthly cycle, not "30 days from now").
+  const now = new Date();
+  const next = cur[0].subscription_expires_at ? new Date(cur[0].subscription_expires_at) : new Date(now);
+  do {
+    next.setMonth(next.getMonth() + 1);
+  } while (next.getTime() <= now.getTime());
+
   const { rows } = await pool.query(
-    `UPDATE companies
-     SET subscription_expires_at = NOW() + INTERVAL '30 days'
-     WHERE id = $1
-     RETURNING *`,
-    [id]
+    `UPDATE companies SET subscription_expires_at = $1 WHERE id = $2 RETURNING *`,
+    [next.toISOString(), id]
   );
   if (rows.length === 0) return null;
   return {

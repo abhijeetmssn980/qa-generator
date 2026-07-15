@@ -60,7 +60,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
 
   const handleRenew = async (c: Company) => {
     if (!c.id) return;
-    if (!window.confirm(`Renew subscription for "${c.name}" by 30 days?`)) return;
+    if (!window.confirm(`Renew subscription for "${c.name}" by 1 month?`)) return;
     setRenewingId(c.id);
     try {
       const updated = await apiRenewSubscription(c.id);

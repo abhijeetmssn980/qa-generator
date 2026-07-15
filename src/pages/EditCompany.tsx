@@ -238,7 +238,7 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
                               }}
                               style={{ padding: '8px 20px', borderRadius: '8px', border: 'none', background: '#3b82f6', color: '#fff', fontWeight: 600, fontSize: '0.88rem', cursor: renewing ? 'not-allowed' : 'pointer', opacity: renewing ? 0.7 : 1 }}
                             >
-                              {renewing ? '⏳ Renewing...' : '🔄 Renew 30 Days'}
+                              {renewing ? '⏳ Renewing...' : '🔄 Renew 1 Month'}
                             </button>
                           )}
                         </div>
