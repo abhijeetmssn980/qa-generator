@@ -120,13 +120,15 @@ router.put('/:id', authenticateToken, requireRole('admin', 'editor'), async (req
   try {
     const targetId = Number(req.params.id);
     const role = (req as any).userRole;
-    // Editors may only edit their own company
+    // Editors may only edit their own company, and cannot change admin-only settings
     if (role !== 'admin') {
       const decoded = (req as any).user;
       const dbUser = decoded?.email ? await findUserByEmail(decoded.email) : null;
       if (!dbUser || dbUser.companyId !== targetId) {
         return res.status(403).json({ error: 'You can only edit your own company' });
       }
+      // Scan analytics is an admin-only setting — ignore it from non-admins
+      delete req.body.scanAnalyticsEnabled;
     }
 
     const company = await updateCompany(targetId, req.body);

@@ -84,7 +84,9 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
     if (!formData.name?.trim()) { setError('Company name is required.'); return; }
     setSaving(true);
     try {
-      await apiUpdateCompany(selectedCompanyId, { name: formData.name, address: formData.address, phone: formData.phone, email: formData.email, website: formData.website, facebookUrl: formData.facebookUrl, instagramUrl: formData.instagramUrl, scanAnalyticsEnabled: formData.scanAnalyticsEnabled });
+      const payload: Partial<Company> = { name: formData.name, address: formData.address, phone: formData.phone, email: formData.email, website: formData.website, facebookUrl: formData.facebookUrl, instagramUrl: formData.instagramUrl };
+      if (isAdmin) payload.scanAnalyticsEnabled = formData.scanAnalyticsEnabled; // scan analytics is admin-only
+      await apiUpdateCompany(selectedCompanyId, payload);
       if (logoFile) {
         await apiUploadLogo(logoFile, selectedCompanyId);
         setCurrentLogoUrl(`${API_BASE}/companies/${selectedCompanyId}/logo?t=` + Date.now());
@@ -247,7 +249,8 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
                   </div>
                 </div>
 
-                {/* Scan Analytics Toggle */}
+                {/* Scan Analytics Toggle — admin only */}
+                {isAdmin && (
                 <div className="form-row">
                   <div className="form-group">
                     <label>SCAN ANALYTICS</label>
@@ -275,6 +278,7 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
                     </div>
                   </div>
                 </div>
+                )}
 
                 {/* Logo Section */}
                 <div className="card-section-title" style={{ marginTop: '8px' }}>Company Logo</div>
