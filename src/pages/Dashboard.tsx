@@ -40,7 +40,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [showLogoutMenu, setShowLogoutMenu] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const showToast = (text: string) => {
+    setToast(text);
+    window.setTimeout(() => setToast(null), 3000);
+  };
 
   const [exportingDb, setExportingDb] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -154,6 +160,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       const updated = await apiUpdateProduct(uniqueId, updates);
       setAllProducts(prev => prev.map(p => p.uniqueId === uniqueId ? updated : p));
       setPage('list');
+      showToast('✅ Changes saved successfully');
     } catch (error) {
       console.error('Failed to update product:', error);
       alert('Failed to update product');
@@ -569,6 +576,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         <section className="dashboard-main">{renderPage()}</section>
       </main>
       {showChangePassword && <ChangePasswordModal onClose={() => setShowChangePassword(false)} />}
+      {toast && <div className="app-toast">{toast}</div>}
     </div>
   );
 };

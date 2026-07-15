@@ -710,6 +710,35 @@
   cursor: default;
 }
 
+/* ── Toast notification ── */
+.app-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2000;
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  color: #15803d;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  animation: app-toast-in 0.2s ease;
+}
+@keyframes app-toast-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 640px) {
+  .app-toast {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    text-align: center;
+  }
+}
+
 /* ── Change Password modal ── */
 .cp-overlay {
   position: fixed;
