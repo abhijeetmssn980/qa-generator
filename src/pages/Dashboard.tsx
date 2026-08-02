@@ -265,6 +265,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                         ? 'Your maintenance subscription is expiring soon. Please contact admin to renew.'
                         : 'Your maintenance subscription is active.'}
                   </p>
+                  <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, color: textColor }}>
+                    {days <= 0 ? 'Expired on: ' : 'Renewal due on: '}
+                    {new Date(subscriptionExpiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </p>
                 </div>
               );
             })()}
@@ -532,9 +536,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
               const color = days <= 0 ? '#dc2626' : days <= 5 ? '#ea580c' : days <= 10 ? '#d97706' : '#16a34a';
               const daysSinceExpiry = days <= 0 ? Math.abs(days) : 0;
               const dataDeletesIn = Math.max(0, 15 - daysSinceExpiry);
+              const expiryDate = new Date(subscriptionExpiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
               return (
-                <div style={{ fontSize: '12px', fontWeight: 700, padding: '5px 12px', borderRadius: '20px', background: bg, color, border: `1px solid ${color}22` }}>
-                  {days > 0 ? `⏳ ${days}d left` : dataDeletesIn > 0 ? `⚠️ Data deletes in ${dataDeletesIn}d` : '🚨 Data at risk'}
+                <div
+                  title={`Renewal due on ${expiryDate}`}
+                  style={{ fontSize: '12px', fontWeight: 700, padding: '5px 12px', borderRadius: '20px', background: bg, color, border: `1px solid ${color}22` }}
+                >
+                  {days > 0 ? `⏳ ${days}d left · ${expiryDate}` : dataDeletesIn > 0 ? `⚠️ Data deletes in ${dataDeletesIn}d` : '🚨 Data at risk'}
                 </div>
               );
             })()}
