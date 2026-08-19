@@ -11,6 +11,7 @@ import productRoutes from './routes/products';
 import companiesRoutes from './routes/companies';
 import hazardsRoutes from './routes/hazards';
 import adminRoutes from './routes/admin';
+import { scheduleDailyBackup } from './backup';
 
 const __filename_local = fileURLToPath(import.meta.url);
 const __dirname_local = path.dirname(__filename_local);
@@ -440,4 +441,5 @@ async function initDB() {
 app.listen(PORT, async () => {
   console.log(`✅ API server running on port ${PORT}`);
   await initDB();
+  scheduleDailyBackup();
 });

@@ -2,7 +2,7 @@
 // Objects are written under `leaflets/<id>.pdf` and `images/<id>.webp` and served
 // as public-read URLs, so the public product page links straight to S3. Enabled
 // only when S3_BUCKET is set — otherwise the app falls back to storing in Postgres.
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 
 const region = process.env.AWS_REGION || 'us-east-1';
 const bucket = process.env.S3_BUCKET || '';
@@ -59,4 +59,28 @@ export async function uploadImage(uniqueId: string, buffer: Buffer, version: num
 
 export async function deleteImage(uniqueId: string): Promise<void> {
   await removeObject(imageKey(uniqueId));
+}
+
+// Database backups — stored under a private `backups/` prefix (no public-read
+// bucket policy applies here, unlike leaflets/images). Returns the S3 key.
+const backupKey = (filename: string) => `backups/${filename}`;
+
+export async function uploadBackup(filename: string, body: Buffer): Promise<string> {
+  const key = backupKey(filename);
+  await putObject(key, body, 'application/sql');
+  return `${bucket}/${key}`;
+}
+
+// Deletes backups older than `retentionDays` and returns how many were removed.
+export async function pruneOldBackups(retentionDays: number): Promise<number> {
+  if (!client) return 0;
+  const cutoff = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
+  const { Contents } = await client.send(
+    new ListObjectsV2Command({ Bucket: bucket, Prefix: 'backups/' })
+  );
+  const stale = (Contents || []).filter(o => o.Key && o.LastModified && o.LastModified.getTime() < cutoff);
+  for (const obj of stale) {
+    await removeObject(obj.Key!);
+  }
+  return stale.length;
 }
